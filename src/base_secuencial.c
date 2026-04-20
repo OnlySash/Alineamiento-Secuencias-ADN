@@ -1,117 +1,129 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
-
+#define MATCH 1
+#define QUEUED 0
+#define MISSING -1
 const char NUCLEOTIDES[] = "ATCG";
 
-/**
- * @brief  Reserva memoria para una cadena.
- * @param  n Cantidad de caracteres.
- * @pre    n > 0.
- * @mod    Reserva n + 1 en el Heap.
- * @return char* Puntero al bloque al asignar mem. NULL en caso de falla.
- */
+
+typedef struct {
+    char* pattern;      // DNA pattern
+    int length;         // DNA length
+    int found_at;       // position wich found the pattern
+    int state;         // QUEUED: 0 , MATCH: 1, MISSING: -1
+} pattern_t;
+
 char* vector_alloc(int n) {
-    char *vector = (char *) malloc((n + 1) * sizeof(char));
-    
+    char *vector = (char *) malloc((n + 1) * sizeof(char)); //reserve memory for char string
     if (vector == NULL) {
-        fprintf(stderr, "Error: No se pudo reservar memoria para el vector.\n");
-    } else {
-        vector[n] = '\0';
+        fprintf(stderr, "Error: Cannot reserve memory for the vector.\n");
+        exit(1);
     }
-    
+    vector[n] = '\0';
     return vector;
 }
 
-/**
- * @brief  Reserva memoria para cadenas.
- * @param  rows Cantidad de cadenas
- * @pre    rows > 0.
- * @return Arreglo de punteros inicializados en NULL.
- */
-char** matrix_alloc(int rows, int cols){
-    char **matrix = (char **) malloc((rows + 1) * sizeof(char *));
-    
-    if (matrix != NULL) {
+pattern_t* pattern_alloc(int rows, int cols) {
+    pattern_t* patterns = (pattern_t*) malloc(rows * sizeof(pattern_t)); //reserve memory for patterns
+    if (patterns != NULL) {
         for (int i = 0; i < rows; i++) {
-            matrix[i] = vector_alloc(cols);
+            patterns[i].pattern = vector_alloc(cols);
+            patterns[i].found_at = -1;
+            patterns[i].state = QUEUED;
         }
-        matrix[rows] = NULL;
     } else {
-        fprintf(stderr, "Error: No se pudo reservar memoria para el vector.\n");
+        fprintf(stderr, "Error: Cannot reserve memory for patterns vector.\n");
     }
-    
-    return matrix;
+    return patterns;
 }
 
-/**
- * @brief Genera secuencialmente una cadena pseudo-aleatoria de nucleótidos de ADN.
- * @param dna_ptr   Puntero al arreglo donde se escribirá la cadena de ADN.
- * @param n         Cantidad de elementos en el arreglo.
- * * @pre  "cadena" != NULL y "n" > 0.
- * @return void.
- */
-void dna_gen_sec(char* dna_ptr, int n){
-    srand(time(NULL));
-
+void dna_gen_secuential(char* dna_ptr, int n) {
     for (int i = 0; i < n; i++) {
-        dna_ptr[i] = NUCLEOTIDES[rand() % 4];
+        dna_ptr[i] = NUCLEOTIDES[rand() % 4]; //take random nucleotides for patterns
     }
     dna_ptr[n] = '\0';
 }
 
-/**
- * @brief Genera secuencialmente patrones pseudo-aleatorios de nucleótidos de tamaño variable.
- * @param patterns  Puntero al arreglo bidim. donde se escribirá cada patrón.
- * @param min_l     Cantidad mínima de nucleótidos del patrón.
- * @param max_l     Cantidad máxima de nucleótidos del patrón.
- * @param k         Cantidad máxima de patrones a generar.
- * * @pre  "patterns" != NULL, "k" != NULL, "max_l" > 0, max_l >= min_l.
- * @return void.
- * 
- * @note max_l siempre debe ser de tamaño n - 1 respecto a asignado en mem.
- * para el largo max. de los patrones esto para marcar el final de cadena ('\0').
- */
-void pattern_gen_sec(char** patterns, int min_l, int max_l, int k) {
-    int pattern_l = 0;
-    srand(time(NULL));
-
-    for (int i = 0; i < k; i ++){
-        pattern_l = (min_l != max_l)? rand() % (max_l - min_l + 1) + min_l : max_l;
-        for (unsigned int j = 0; j < pattern_l; j++){
-            patterns[i][j] = NUCLEOTIDES[rand() % 4];
+void pattern_gen_secuential(pattern_t* patterns, int min_length, int max_length, int k_patterns) {
+    for (int i = 0; i < k_patterns; i++) {
+        // verifies if max_length and min_length are not equal then: generates random length between min and max. 
+        // otherwise takes max_length for patterns length
+        int pattern_length = (min_length != max_length) ? rand() % (max_length - min_length + 1) + min_length : max_length;
+        for (int j = 0; j < pattern_length; j++) {
+            patterns[i].pattern[j] = NUCLEOTIDES[rand() % 4];
         }
-        patterns[i][pattern_l] = '\0';
+        patterns[i].pattern[pattern_length] = '\0';
+        patterns[i].state = QUEUED; 
     }
+}
 
+void search_patterns_secuential(const char* dna_string, int dna_string_lenght, pattern_t* patterns, int k_patterns) {
+    for (int p = 0; p < k_patterns; p++) {
+        char* pttn = patterns[p].pattern;
+        int pttn_length = strlen(pttn);
+        int match_at = -1;
+
+        for (int i = 0; i <= dna_string_lenght - pttn_length; i++) {
+            int j;
+            for (j = 0; j < pttn_length; j++) {
+                if (dna_string[i + j] != pttn[j]) break;
+            }
+            if (j == pttn_length) {
+                match_at = i;
+                break; 
+            }
+        }
+
+        if (match_at != -1) {
+            patterns[p].found_at = match_at;
+            patterns[p].state = MATCH; 
+        } else {
+            patterns[p].state = MISSING;
+        }
+    }
 }
 
 int main() {
-    int n = 20;
-    int k = 10;
-    int pttn_max_l = 6;
+    // Parametros de prueba
+    int n = 5000;
+    int k_patterns = 10;
+    int pttn_max_length = 6;
+    int pttn_min_length = 3;
+
+    srand(time(NULL));
+
+    // 1. Reserva de memoria
     char *dna_string = vector_alloc(n);
-    char **patterns = matrix_alloc(k, pttn_max_l);
+    pattern_t *patterns = pattern_alloc(k_patterns, pttn_max_length);
 
-    dna_gen_sec(dna_string, n);
-    pattern_gen_sec(patterns, 3, pttn_max_l, k);
+    // 2. Generacion de datos
+    dna_gen_secuential(dna_string, n);
+    pattern_gen_secuential(patterns, pttn_min_length, pttn_max_length, k_patterns);
 
-    for(int i = 0; i < n; i++){
-        printf("%c",dna_string[i]);
-    }
+    // 3. Ejecucion secuencial
+    printf("Iniciando búsqueda secuencial...\n");
+    search_patterns_secuential(dna_string, n, patterns, k_patterns);
 
-    for(int i = 0; i < k; i++){
-        for (int j = 0; j < pttn_max_l; j++){
-            printf("%c", patterns[i][j]);
-        }
+    // 4. Mostrar resultados
+    printf("\nSecuencia ADN: %s\n\n", dna_string);
+    for(int i = 0; i < k_patterns; i++) {
+        printf("Patrón %d [%s] - Estado: [%d]", i, patterns[i].pattern, patterns[i].state);
+        if(patterns[i].state == MATCH) {
+            printf(" - Posición: %d\n", patterns[i].found_at);
+        } else {
             printf("\n");
+        }
     }
-    
-    for (int i = 0; i < k; i++) {
-        free(*(patterns + i));
+
+    // 5. Liberacion de memoria
+    for (int i = 0; i < k_patterns; i++) {
+        free(patterns[i].pattern);
     }
     free(patterns);
     free(dna_string);
+
     return 0;
 }

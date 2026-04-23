@@ -1,5 +1,5 @@
 # --- COMPILER CFG ---
-CC       := gcc
+CC       := cc
 MPI_CC   := mpicc
 CFLAGS   := -Wall -Wextra -Wpedantic -std=c11 -Iinclude
 LDFLAGS  := -lpthread
@@ -11,14 +11,16 @@ BIN_DIR   := bin
 
 # --- ARCHIVES ---
 BASE_OBJ  := $(OBJ_DIR)/base.o
+MPI_OBJ := $(OBJ_DIR)/base_mpi.o
 
 # --- TARGETS ---
 TARGET_SEQ := $(BIN_DIR)/base_sequential
 TARGET_PTH := $(BIN_DIR)/base_pthread
+TARGET_MPI := $(BIN_DIR)/base_mpi
 
 # --- RULES ---
 # Default [all targets]
-all: $(TARGET_SEQ) $(TARGET_PTH)
+all: $(TARGET_SEQ) $(TARGET_PTH) $(TARGET_MPI)
 	@echo "All targets compiled. Me go home."
 
 seq: $(TARGET_SEQ)
@@ -26,6 +28,9 @@ seq: $(TARGET_SEQ)
 
 pth: $(TARGET_PTH)
 	@echo "Pthreads target ready. Me go home."
+
+mpi: $(TARGET_MPI)
+	@echo "MPI target ready. Me go home."
 
 # Linking Sequential
 $(TARGET_SEQ): $(OBJ_DIR)/base_sequential.o $(BASE_OBJ) | $(BIN_DIR)
@@ -35,6 +40,12 @@ $(TARGET_SEQ): $(OBJ_DIR)/base_sequential.o $(BASE_OBJ) | $(BIN_DIR)
 # Linking Pthreads
 $(TARGET_PTH): $(OBJ_DIR)/base_pthread.o $(BASE_OBJ) | $(BIN_DIR)
 	$(CC) $^ $(LDFLAGS) -o $@
+	@echo "Compilation of $@ completed."
+
+# Linking MPI
+$(TARGET_MPI): CC = mpicc
+$(TARGET_MPI): $(OBJ_DIR)/base_mpi.o $(BASE_OBJ) | $(BIN_DIR)
+	$(MPI_CC) $^ -o $@
 	@echo "Compilation of $@ completed."
 
 # Compilation (change to MPI/CC when needed)

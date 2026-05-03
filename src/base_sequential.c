@@ -1,3 +1,4 @@
+#include "../include/base.h"
 #include "../include/base_sequential.h"
 
 void search_patterns_secuential(const char* dna_string, int dna_string_lenght, pattern_t* patterns, int k_patterns) {

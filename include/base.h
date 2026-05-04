@@ -5,34 +5,74 @@
 #include <stdlib.h>
 #include <time.h>
 
+/** \def MATCH
+ * \brief State indicating the pattern was found.
+ */
 #define MATCH   1
+
+/** \def QUEUED
+ * \brief State indicating the pattern is queued for search.
+ */
 #define QUEUED  0
+
+/** \def MISSING
+ * \brief State indicating the pattern was not found.
+ */
 #define MISSING -1
 
 extern const char NUCLEOTIDES[];
 
+/**
+ * \struct pattern_t
+ * \brief Represents a DNA pattern and its search state.
+ */
 typedef struct {
-    char* pattern;      // DNA pattern
-    int length;         // DNA length
-    int found_at;       // Position in wich we found the pattern
-    int state;          // MISSING: -1, QUEUED: 0 , MATCH: 1
+    char* pattern;      /**< DNA pattern string */
+    int length;         /**< Length of the DNA pattern */
+    int found_at;       /**< Position where the pattern was found */
+    int state;          /**< State of the search: MISSING (-1), QUEUED (0), MATCH (1) */
 } pattern_t;
 
-// Estructura exclusiva para los argumentos de los hilos
+/**
+ * \struct thread_args_t
+ * \brief Arguments passed to threads/processes for parallel execution.
+ */
 typedef struct {
-    const char* dna_string;
-    int dna_string_length;
-    pattern_t* patterns;
-    int start_index;
-    int end_index;
+    const char* dna_string;    /**< Pointer to the main DNA string */
+    int dna_string_length;     /**< Length of the main DNA string */
+    pattern_t* patterns;       /**< Array of patterns to search */
+    int start_index;           /**< Start index for the workload */
+    int end_index;             /**< End index for the workload */
 } thread_args_t;
 
+/**
+ * \brief Allocates memory for a char vector.
+ * \param n Size of the vector to allocate.
+ * \return Pointer to the allocated char array.
+ */
 char* vector_alloc(int n);
 
-pattern_t* pattern_alloc(int k, int size);
+/**
+ * \brief Allocates memory for an array of patterns.
+ * \param rows Number of patterns.
+ * \param cols Length of each pattern.
+ * \return Pointer to the allocated array of pattern_t.
+ */
+pattern_t* pattern_alloc(int rows, int cols);
 
+/**
+ * \brief Generates a random DNA string.
+ * \param dna_ptr Pointer to the allocated memory for the DNA string.
+ * \param n Length of the DNA string to generate.
+ */
 void dna_generation(char* dna_ptr, int n);
 
-void pattern_generation(pattern_t* patterns, int min_length, int max_length, int k_patterns);
+/**
+ * \brief Generates random patterns to search.
+ * \param patterns Array of pattern_t structs to populate.
+ * \param length Length of each pattern.
+ * \param k_patterns Number of patterns to generate.
+ */
+void pattern_generation(pattern_t* patterns, int length, int k_patterns);
 
 #endif

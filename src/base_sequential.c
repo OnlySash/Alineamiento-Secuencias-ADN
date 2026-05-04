@@ -1,12 +1,12 @@
 #include "../include/base.h"
 #include "../include/base_sequential.h"
 
-void search_patterns_secuential(const char* dna_string, int dna_string_lenght, pattern_t* patterns, int k_patterns) {
+void search_patterns_sequential(const char* dna_string, int dna_string_length, pattern_t* patterns, int k_patterns) {
     for (int p = 0; p < k_patterns; p++) {
         char* pttn = patterns[p].pattern;
         int pttn_length = patterns[p].length;
         int match_at = -1;
-        int search_end = dna_string_lenght - pttn_length;
+        int search_end = dna_string_length - pttn_length;
 
         for (int i = 0; i <= search_end; i++) {
             int j;
@@ -29,38 +29,31 @@ void search_patterns_secuential(const char* dna_string, int dna_string_lenght, p
 }
 
 int main() {
-    // Parametros de prueba
     int n = 5000;
     int k_patterns = 10;
-    int pttn_max_length = 6;
-    int pttn_min_length = 3;
+    int length = 6;
 
     srand(time(NULL));
 
-    // 1. Reserva de memoria
     char *dna_string = vector_alloc(n);
-    pattern_t *patterns = pattern_alloc(k_patterns, pttn_max_length);
+    pattern_t *patterns = pattern_alloc(k_patterns, length);
 
-    // 2. Generacion de datos
     dna_generation(dna_string, n);
-    pattern_generation(patterns, pttn_min_length, pttn_max_length, k_patterns);
+    pattern_generation(patterns, length, k_patterns);
 
-    // 3. Ejecucion secuencial
-    printf("Iniciando búsqueda secuencial...\n");
-    search_patterns_secuential(dna_string, n, patterns, k_patterns);
+    printf("Starting sequential search...\n");
+    search_patterns_sequential(dna_string, n, patterns, k_patterns);
 
-    // 4. Mostrar resultados
-    printf("\nSecuencia ADN: %s\n\n", dna_string);
+    printf("\nDNA Sequence: %s\n\n", dna_string);
     for(int i = 0; i < k_patterns; i++) {
-        printf("Patrón %d [%s] - Estado: [%d]", i, patterns[i].pattern, patterns[i].state);
+        printf("Pattern %d [%s] - State: [%d]", i, patterns[i].pattern, patterns[i].state);
         if(patterns[i].state == MATCH) {
-            printf(" - Posición: %d\n", patterns[i].found_at);
+            printf(" - Position: %d\n", patterns[i].found_at);
         } else {
             printf("\n");
         }
     }
 
-    // 5. Liberacion de memoria
     for (int i = 0; i < k_patterns; i++) {
         free(patterns[i].pattern);
     }

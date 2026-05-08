@@ -51,7 +51,7 @@ void search_patterns_pthread(const char* dna_string, int dna_string_length, patt
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     int n = 50000;
     int k_patterns = 10;
     int length = 3;

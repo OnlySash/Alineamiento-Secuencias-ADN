@@ -28,7 +28,7 @@ void search_patterns_sequential(const char* dna_string, int dna_string_length, p
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     int n = 5000;
     int k_patterns = 10;
     int length = 6;

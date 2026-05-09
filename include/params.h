@@ -13,8 +13,13 @@ typedef struct {
 } params_t;
 
 /**
- * @brief Procesa los argumentos y llena la estructura config.
+ * \brief Parses command-line arguments and populates the execution parameters structure.
+ * * Initializes the parameters with predefined default values. It then processes the
+ * command-line arguments using `getopt_long` to override the values specified by the user.
+ * * \param argc The number of command-line arguments passed to the program.
+ * \param argv An array of strings representing the command-line arguments.
+ * \param params Pointer to the params_t structure to be populated with the parsed configuration.
  */
-void parse_arguments(int argc, char *argv[], params_t *config);
+void parse_arguments(int argc, char *argv[], params_t *params);
 
 #endif

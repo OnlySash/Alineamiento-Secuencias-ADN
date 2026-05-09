@@ -1,5 +1,6 @@
 #include "../include/base.h"
 #include "../include/base_sequential.h"
+#include "../include/params.h"
 
 void search_patterns_sequential(const char* dna_string, int dna_string_length, pattern_t* patterns, int k_patterns) {
     for (int p = 0; p < k_patterns; p++) {
@@ -29,23 +30,18 @@ void search_patterns_sequential(const char* dna_string, int dna_string_length, p
 }
 
 int main(int argc, char* argv[]) {
-    int n = 5000;
-    int k_patterns = 10;
-    int length = 6;
+    params_t params;
+    parse_arguments(argc, argv, &params);
+    
+    char *dna_string = vector_alloc(params.dna_length);
+    pattern_t *patterns = pattern_alloc(params.k_patterns, params.pattern_length);
 
-    srand(time(NULL));
+    dna_generation(dna_string, params.dna_length);
+    pattern_generation(patterns, params.pattern_length, params.k_patterns);
 
-    char *dna_string = vector_alloc(n);
-    pattern_t *patterns = pattern_alloc(k_patterns, length);
+    search_patterns_sequential(dna_string, params.dna_length, patterns, params.k_patterns);
 
-    dna_generation(dna_string, n);
-    pattern_generation(patterns, length, k_patterns);
-
-    printf("Starting sequential search...\n");
-    search_patterns_sequential(dna_string, n, patterns, k_patterns);
-
-    printf("\nDNA Sequence: %s\n\n", dna_string);
-    for(int i = 0; i < k_patterns; i++) {
+    for (int i = 0; i < params.k_patterns; i++) {
         printf("Pattern %d [%s] - State: [%d]", i, patterns[i].pattern, patterns[i].state);
         if(patterns[i].state == MATCH) {
             printf(" - Position: %d\n", patterns[i].found_at);
@@ -54,7 +50,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    for (int i = 0; i < k_patterns; i++) {
+    for (int i = 0; i < params.k_patterns; i++) {
         free(patterns[i].pattern);
     }
     free(patterns);

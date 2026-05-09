@@ -39,7 +39,7 @@ void compute_mpi_chunks(int rank, int size, int chain_len, thread_args_t *proces
 
 void reduce_mpi_matches(int size, int pattern_num, pattern_t *patterns, int *all_results) {
     for (int p = 0; p < pattern_num; p++) {
-        for (int r = 1; r < size; r++) { // Empezamos en 1 porque el 0 ya está en 'patterns'
+        for (int r = 1; r < size; r++) { // Start from 1 since MASTER is on patterns already
             int idx        = r * pattern_num * 2 + p * 2;
             int r_state    = all_results[idx];
             int r_found_at = all_results[idx + 1];
@@ -55,9 +55,9 @@ void reduce_mpi_matches(int size, int pattern_num, pattern_t *patterns, int *all
 }
 
 void print_results(int pattern_num, pattern_t *patterns) {
-    for(int i = 0; i < pattern_num; i++) {
+    for (int i = 0; i < pattern_num; i++) {
         printf("Pattern %d [%s] - State: [%d]", i, patterns[i].pattern, patterns[i].state);
-        if(patterns[i].state == MATCH) {
+        if (patterns[i].state == MATCH) {
             printf(" - Position: %d\n", patterns[i].found_at);
         } else {
             printf("\n");
@@ -66,13 +66,13 @@ void print_results(int pattern_num, pattern_t *patterns) {
 }
 
 int main(int argc, char *argv[]) {
+    params_t params;
+    parse_arguments(argc, argv, &params);
+
     int rank, size;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-    params_t params;
-    parse_arguments(argc, argv, &params);
 
     char *dna_chain = vector_alloc(params.dna_length);
     pattern_t *patterns = pattern_alloc(params.k_patterns, params.pattern_length);
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
     }
 
     MPI_Gather(local_results, params.k_patterns * 2, MPI_INT, 
-               all_results, params.k_patterns * 2, MPI_INT, 
+               all_results,   params.k_patterns * 2, MPI_INT, 
                MASTER, MPI_COMM_WORLD);
 
     if (rank == MASTER) {

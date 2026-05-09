@@ -16,9 +16,8 @@ void search_pattern_mpi(const char* dna_string, int start, int end, pattern_t* p
 
 /**
  * \brief Calculates the starting and ending indices of the DNA sequence for a specific MPI rank.
- * * This function performs a static load balancing by dividing the total DNA chain length 
- * among the available MPI processes. It accounts for remainders to ensure all nucleotides 
- * are covered.
+ * * This function performs a static load balancing by dividing the total DNA chain length among
+ * the available MPI processes. It accounts for remainders to ensure all nucleotides are covered.
  * * \param rank The MPI rank of the current process.
  * \param size The total number of MPI processes in the communicator.
  * \param chain_len The total length of the DNA string to be processed.

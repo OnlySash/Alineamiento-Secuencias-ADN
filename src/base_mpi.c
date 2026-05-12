@@ -56,19 +56,18 @@ void reduce_mpi_matches(int size, int pattern_num, pattern_t *patterns, int *all
 
 void print_results(int pattern_num, pattern_t *patterns) {
     for (int i = 0; i < pattern_num; i++) {
-        printf("Pattern %d [%s] - State: [%d]", i, patterns[i].pattern, patterns[i].state);
+        printf("PATTERN_%d [%s]   STATE: ", i, patterns[i].pattern);
         if (patterns[i].state == MATCH) {
-            printf(" - Position: %d\n", patterns[i].found_at);
+            printf("MATCH    at i = %d\n", patterns[i].found_at);
+        } else if (patterns[i].state == MISSING) {
+            printf("MISSING\n");
         } else {
-            printf("\n");
+            printf("QUEUED\n");
         }
     }
 }
 
-int main(int argc, char *argv[]) {
-    params_t params;
-    parse_arguments(argc, argv, &params);
-
+void run_mpi(int argc, char *argv[], params_t params) {
     int rank, size;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -121,6 +120,13 @@ int main(int argc, char *argv[]) {
     }
     free(patterns);
     free(dna_chain);
+}
+
+int main(int argc, char *argv[]) {
+    params_t params;
+    parse_arguments(argc, argv, &params);
     
+    run_mpi(argc, argv, params);
+
     return 0;
 }

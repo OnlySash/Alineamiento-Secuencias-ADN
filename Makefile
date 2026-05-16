@@ -65,5 +65,8 @@ clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
 	@echo "Cleaning done. Me go home."
 
+test: 
+	gcc -O2 -o run_tests tests/tests.c src/base.c src/params.c src/base_sequential.c src/base_pthread.c -I include/ -lpthread -DTESTING
+
 # Treat as execution cmds
-.PHONY: all clean seq pth mpi
+.PHONY: all clean seq pth mpi tests

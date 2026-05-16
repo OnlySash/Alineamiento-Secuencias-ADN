@@ -51,7 +51,7 @@ void search_patterns_pthread(const char* dna_string, int dna_string_length, patt
         pthread_join(threads[i], NULL);
     }
 }
-
+#ifndef TESTING
 int main(int argc, char* argv[]) {
     params_t params;
     parse_arguments(argc, argv, &params);
@@ -81,3 +81,4 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+#endif

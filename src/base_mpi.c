@@ -37,6 +37,7 @@ void compute_mpi_chunks(int rank, int size, int chain_len, thread_args_t *proces
     process_data->end_index = process_data->start_index + subchain_len + (offset < remainder);
 }
 
+
 void reduce_mpi_matches(int size, int pattern_num, pattern_t *patterns, int *all_results) {
     for (int p = 0; p < pattern_num; p++) {
         for (int r = 1; r < size; r++) { // Start from 1 since MASTER is on patterns already

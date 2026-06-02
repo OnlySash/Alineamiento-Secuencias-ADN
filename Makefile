@@ -15,7 +15,6 @@ BIN_DIR    := bin
 OBJS       := $(OBJ_DIR)/main.o \
               $(OBJ_DIR)/base.o \
               $(OBJ_DIR)/base_sequential.o \
-              $(OBJ_DIR)/base_pthread.o \
               $(OBJ_DIR)/base_pthreads.o \
               $(OBJ_DIR)/base_mpi.o \
               $(OBJ_DIR)/params.o \

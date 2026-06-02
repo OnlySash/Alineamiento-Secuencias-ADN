@@ -144,6 +144,34 @@ void* pool_worker(void* arg)
     return NULL;
 }
 
+void* thread_worker(void* arg) {
+    thread_args_t* data = (thread_args_t*) arg;
+
+    for (int p = data->start_index; p < data->end_index; p++) {
+        search_single_pattern(data->dna_string, 0, data->dna_string_length, &data->patterns[p]);
+    }
+    return NULL;
+}
+
+void search_patterns_pthread(const char* dna_string, int dna_string_length, pattern_t* patterns, int k_patterns, int num_threads) {
+    pthread_t threads[num_threads];
+    thread_args_t args[num_threads];
+    int patterns_per_thread = k_patterns / num_threads;
+
+    for (int i = 0; i < num_threads; i++) {
+        args[i].dna_string = dna_string;
+        args[i].dna_string_length = dna_string_length;
+        args[i].patterns = patterns;
+        args[i].start_index = i * patterns_per_thread;
+        args[i].end_index = (i == num_threads - 1) ? k_patterns : (i + 1) * patterns_per_thread;
+
+        pthread_create(&threads[i], NULL, thread_worker, &args[i]);
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i], NULL);
+    }
+}
 
 void run_pthread_pool(params_t params) {
     int n = params.dna_length;

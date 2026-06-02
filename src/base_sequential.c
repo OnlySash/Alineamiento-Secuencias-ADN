@@ -4,6 +4,14 @@
 
 void search_patterns_sequential(const char* dna_string, int dna_string_length, pattern_t* patterns, int k_patterns) {
     for (int p = 0; p < k_patterns; p++) {
+        // Secuencial busca todo el ADN, de 0 al largo total
+        search_single_pattern(dna_string, 0, dna_string_length, &patterns[p]);
+    }
+}
+
+/*
+void search_patterns_sequential(const char* dna_string, int dna_string_length, pattern_t* patterns, int k_patterns) {
+    for (int p = 0; p < k_patterns; p++) {
         char* pttn = patterns[p].pattern;
         int pttn_length = patterns[p].length;
         int match_at = -1;
@@ -28,6 +36,8 @@ void search_patterns_sequential(const char* dna_string, int dna_string_length, p
         }
     }
 }
+
+
 #ifndef TESTING
 int main(int argc, char* argv[]) {
     params_t params;
@@ -59,3 +69,4 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 #endif
+*/

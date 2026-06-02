@@ -3,31 +3,9 @@
 
 void* thread_worker(void* arg) {
     thread_args_t* data = (thread_args_t*) arg;
-    
+
     for (int p = data->start_index; p < data->end_index; p++) {
-        pattern_t* pttn_struct = &data->patterns[p];
-        char* pttn = pttn_struct->pattern;
-        int pttn_length = pttn_struct->length;
-        int match_at = MISSING;
-        int search_end = data->dna_string_length - pttn_length;
-
-        for (int i = 0; i <= search_end; i++) {
-            int j;
-            for (j = 0; j < pttn_length; j++) {
-                if (data->dna_string[i + j] != pttn[j]) break;
-            }
-            if (j == pttn_length) {
-                match_at = i;
-                break; 
-            }
-        }
-
-        if (match_at != MISSING) {
-            pttn_struct->found_at = match_at;
-            pttn_struct->state = MATCH; 
-        } else {
-            pttn_struct->state = MISSING;
-        }
+        search_single_pattern(data->dna_string, 0, data->dna_string_length, &data->patterns[p]);
     }
     return NULL;
 }
@@ -51,6 +29,8 @@ void search_patterns_pthread(const char* dna_string, int dna_string_length, patt
         pthread_join(threads[i], NULL);
     }
 }
+
+/*
 #ifndef TESTING
 int main(int argc, char* argv[]) {
     params_t params;
@@ -82,3 +62,4 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 #endif
+*/

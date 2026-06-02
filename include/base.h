@@ -75,4 +75,13 @@ void dna_generation(char* dna_ptr, int n);
  */
 void pattern_generation(pattern_t* patterns, int length, int k_patterns);
 
+/**
+ * \brief Searches for a single pattern in a specified range of the DNA string.
+ * \param dna Pointer to the main DNA string.
+ * \param start Starting index for the search.
+ * \param end Ending index for the search.
+ * \param pttn_struct Pointer to the pattern_t struct representing the pattern to search.
+ */
+void search_single_pattern(const char* dna, int start, int end, pattern_t* pttn_struct);
+
 #endif

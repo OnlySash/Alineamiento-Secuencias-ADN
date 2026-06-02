@@ -2,44 +2,22 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include <pthread.h> // <--- Biblioteca para hilos
+#include <pthread.h>
 
-#define MATCH 1
-#define QUEUED 0
-#define MISSING -1
-const char NUCLEOTIDES[] = "ATCG";
+#include "../include/base.h"
+#include "../include/params.h"
 
-typedef struct {
-    char* pattern;      
-    int length;         
-    int found_at;       
-    int state;         
-} pattern_t;
-
-// --- ESTRUCTURA PARA PTHREADS ---
-typedef struct {
-    const char* dna_string;
-    int dna_len;
-    pattern_t* patterns;
-    int start_index;    // Índice del primer patrón que procesa este hilo
-    int end_index;      // Índice del último patrón
-} thread_args_t;
-
-//FASE 2 PROYECTO: Funciones extra Pthreads 
 typedef struct {
     int pattern_index;
 } task_t;
 
 typedef struct {
     task_t* tasks;
-
     int front;
     int rear;
     int count;
     int capacity;
-
     pthread_mutex_t mutex;
-
     pthread_cond_t not_empty;
     pthread_cond_t not_full;
 } task_queue_t;
@@ -87,26 +65,24 @@ int dequeue(task_queue_t* q)
 }
 
 
-// vector_alloc, pattern_alloc, dna_gen_secuential, pattern_gen_secuential se mantienen igual
+// char* vector_alloc(int n) {
+//     char *vector = (char *) malloc((n + 1) * sizeof(char));
+//     if (vector == NULL) { exit(1); }
+//     vector[n] = '\0';
+//     return vector;
+// }
 
-char* vector_alloc(int n) {
-    char *vector = (char *) malloc((n + 1) * sizeof(char));
-    if (vector == NULL) { exit(1); }
-    vector[n] = '\0';
-    return vector;
-}
-
-pattern_t* pattern_alloc(int rows, int cols) {
-    pattern_t* patterns = (pattern_t*) malloc(rows * sizeof(pattern_t));
-    if (patterns != NULL) {
-        for (int i = 0; i < rows; i++) {
-            patterns[i].pattern = vector_alloc(cols);
-            patterns[i].found_at = -1;
-            patterns[i].state = QUEUED;
-        }
-    }
-    return patterns;
-}
+// pattern_t* pattern_alloc(int rows, int cols) {
+//     pattern_t* patterns = (pattern_t*) malloc(rows * sizeof(pattern_t));
+//     if (patterns != NULL) {
+//         for (int i = 0; i < rows; i++) {
+//             patterns[i].pattern = vector_alloc(cols);
+//             patterns[i].found_at = -1;
+//             patterns[i].state = QUEUED;
+//         }
+//     }
+//     return patterns;
+// }
 
 void dna_gen_secuential(char* dna_ptr, int n) {
     for (int i = 0; i < n; i++) dna_ptr[i] = NUCLEOTIDES[rand() % 4];
@@ -122,7 +98,7 @@ void pattern_gen_secuential(pattern_t* patterns, int min_l, int max_l, int k) {
     }
 }
 
-// --- LÓGICA DE BÚSQUEDA (Reutilizable) ---
+/*
 void buscar_un_patron(const char* dna, int dna_len, pattern_t* pttn_struct) {
     char* p = pttn_struct->pattern;
     int plen = strlen(p);
@@ -139,20 +115,25 @@ void buscar_un_patron(const char* dna, int dna_len, pattern_t* pttn_struct) {
     }
     pttn_struct->state = MISSING;
 }
+*/
 
 //NUEVO Thread worker
 void* pool_worker(void* arg)
 {
+    (void)arg;
     while(1)
     {
         int idx = dequeue(&task_queue);
         if(idx == -1)
             break;
-        buscar_un_patron(
+            
+        search_single_pattern(
             global_dna,
+            0,
             global_dna_len,
             &global_patterns[idx]
         );
+        
         pthread_mutex_lock(&pending_mutex);
         pending_tasks--;
         if(pending_tasks == 0)
@@ -163,100 +144,76 @@ void* pool_worker(void* arg)
     return NULL;
 }
 
-// --- FUNCIÓN DEL HILO (Parte B) ---
-void* thread_worker(void* arg) {
-    thread_args_t* data = (thread_args_t*) arg;
-    for (int i = data->start_index; i < data->end_index; i++) {
-        buscar_un_patron(data->dna_string, data->dna_len, &data->patterns[i]);
-    }
-    return NULL;
-}
-#ifndef TESTING
-int main() {
-    int n = 50000;         // ADN más grande para notar el cambio
-    int k_patterns = 20;
-    int num_threads = 4;   // Cantidad de hilos
+
+void run_pthread_pool(params_t params) {
+    int n = params.dna_length;
+    int k_patterns = params.k_patterns;
+    int num_threads = params.num_threads;
+
     srand(time(NULL));
 
     char *dna_string = vector_alloc(n);
-    pattern_t *patterns = pattern_alloc(k_patterns, 10);
+    pattern_t *patterns = pattern_alloc(k_patterns, params.pattern_length);
+    
     dna_gen_secuential(dna_string, n);
-    pattern_gen_secuential(patterns, 4, 10, k_patterns);
+    pattern_gen_secuential(patterns, params.pattern_length, params.pattern_length, k_patterns);
 
-    //Agregar nuevas funciones
+    // Configuracion de variables globales necesarias para el pool
     global_dna = dna_string;
     global_dna_len = n;
     global_patterns = patterns;
-
     pending_tasks = k_patterns;
 
     task_queue.capacity = k_patterns;
     task_queue.front = 0;
     task_queue.rear = 0;
     task_queue.count = 0;
-
     task_queue.tasks = malloc(sizeof(task_t) * k_patterns);
 
     pthread_mutex_init(&task_queue.mutex, NULL);
-    pthread_cond_init(&task_queue.not_empty,NULL);
-    pthread_cond_init(&task_queue.not_full,NULL);
+    pthread_cond_init(&task_queue.not_empty, NULL);
+    pthread_cond_init(&task_queue.not_full, NULL);
 
-    // --- IMPLEMENTACIÓN PTHREADS ---
-    printf("Iniciando búsqueda paralela con %d hilos...\n", num_threads);
+    printf("Iniciando busqueda paralela con Pool de %d hilos...\n", num_threads);
     
     pthread_t threads[num_threads];
-    /*thread_args_t args[num_threads];
-    int patterns_per_thread = k_patterns / num_threads;
-*/
     for (int i = 0; i < num_threads; i++) {
-       /* args[i].dna_string = dna_string;
-        args[i].dna_len = n;
-        args[i].patterns = patterns;
-        args[i].start_index = i * patterns_per_thread;
-        // El último hilo se lleva el resto si la división no es exacta
-        args[i].end_index = (i == num_threads - 1) ? k_patterns : (i + 1) * patterns_per_thread;
-*/
-        //Usar pool_worker en vez de thread_worker para la fase 2
-        //pthread_create(&threads[i], NULL, thread_worker, &args[i]);
         pthread_create(&threads[i], NULL, pool_worker, NULL);
     }
 
-    for(int i = 0; i < k_patterns; i++)
-    {
+    // Insertar todas las tareas (patrones a buscar) en la cola
+    for(int i = 0; i < k_patterns; i++) {
         enqueue(&task_queue, i);
     }
 
-    // Esperar a que todos terminen
+    // Esperar con variable de condicion a que los hilos terminen todas las tareas
     pthread_mutex_lock(&pending_mutex);
-
-    while(pending_tasks > 0)
-    {
-        pthread_cond_wait( &all_done,&pending_mutex);
+    while(pending_tasks > 0) {
+        pthread_cond_wait(&all_done, &pending_mutex);
     }
     pthread_mutex_unlock(&pending_mutex);
 
     shutdown_pool = 1;
-
-    pthread_cond_broadcast(
-        &task_queue.not_empty
-    );
+    pthread_cond_broadcast(&task_queue.not_empty);
+    
     for (int i = 0; i < num_threads; i++) {
         pthread_join(threads[i], NULL);
     }
 
-    free(task_queue.tasks);
-    
-
-    // Mostrar algunos resultados
-    for(int i = 0; i < 5; i++) {
-        printf("Patrón %d [%s] - Estado: [%d] Pos: %d\n", 
+    int lim = (k_patterns < 5) ? k_patterns : 5;
+    for(int i = 0; i < lim; i++) {
+        printf("Patron %d [%s] - Estado: [%d] Pos: %d\n", 
                 i, patterns[i].pattern, patterns[i].state, patterns[i].found_at);
     }
 
-    // Limpieza
-    for (int i = 0; i < k_patterns; i++) free(patterns[i].pattern);
+    free(task_queue.tasks);
+    pthread_mutex_destroy(&task_queue.mutex);
+    pthread_cond_destroy(&task_queue.not_empty);
+    pthread_cond_destroy(&task_queue.not_full);
+
+    for (int i = 0; i < k_patterns; i++) {
+        free(patterns[i].pattern);
+    }
     free(patterns);
     free(dna_string);
-    return 0;
 }
-#endif

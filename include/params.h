@@ -5,11 +5,13 @@
  * @struct params_tdef
  * @brief Centralize all configuration parameters for the DNA pattern search.
  */
+// params.h
 typedef struct {
     int dna_length;
     int k_patterns;
     int pattern_length;
     int num_threads;
+    int mode; // 1=Secuencial, 2=Pthreads, 3=MPI, 4=Tests
 } params_t;
 
 /**

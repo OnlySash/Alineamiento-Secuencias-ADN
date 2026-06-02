@@ -3,6 +3,7 @@
 
 #define MASTER 0
 
+/*
 void search_pattern_mpi(const char* dna_string, int start, int end, pattern_t* pttn_struct) {
     char* pttn = pttn_struct->pattern;
     int pttn_length = pttn_struct->length;
@@ -27,6 +28,7 @@ void search_pattern_mpi(const char* dna_string, int start, int end, pattern_t* p
         pttn_struct->state = MISSING;
     }
 }
+*/
 
 void compute_mpi_chunks(int rank, int size, int chain_len, thread_args_t *process_data) {
     int subchain_len = chain_len / size;
@@ -92,7 +94,7 @@ void run_mpi(int argc, char *argv[], params_t params) {
     compute_mpi_chunks(rank, size, params.dna_length, &process_data);
 
     for (int p = 0; p < params.k_patterns; p++) {
-        search_pattern_mpi(dna_chain, process_data.start_index, process_data.end_index, &patterns[p]);
+        search_single_pattern(dna_chain, process_data.start_index, process_data.end_index, &patterns[p]); 
     }
 
     int local_results[params.k_patterns * 2];
@@ -122,6 +124,8 @@ void run_mpi(int argc, char *argv[], params_t params) {
     free(patterns);
     free(dna_chain);
 }
+
+/*
 #ifndef TESTING
 int main(int argc, char *argv[]) {
     params_t params;
@@ -132,3 +136,4 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 #endif
+*/

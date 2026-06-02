@@ -4,6 +4,7 @@
 #include "../include/base.h"
 #include "../include/base_pthread.h"
 #include "../include/base_sequential.h"
+#include "../include/test.h"
 
 #define REINICIAR_PATRON(p)                                                    \
   (p).state = QUEUED;                                                          \
@@ -18,7 +19,7 @@
 int pruebasTotales = 0;
 int pruebasBuenas = 0;
 
-void verificarResultado(char *nombre, pattern_t patron, int estadoEsperado,int posicionEsperada) {
+void verificarResultado(char *nombre, pattern_t patron, int estadoEsperado, int posicionEsperada) {
   pruebasTotales++;
   int correcto = 1;
 
@@ -39,11 +40,8 @@ void verificarResultado(char *nombre, pattern_t patron, int estadoEsperado,int p
   }
 }
 
-// CASOS 1,2,3 y 4: Patron al inicio, Patron al final, Patron inexistente y Multiples ocurrencias
-void casos_1_2_3_4(char *nombre, char *dna, char *textoPatron, int estadoEsperado,int posicionEsperada) {
-
+void casos_1_2_3_4(char *nombre, char *dna, char *textoPatron, int estadoEsperado, int posicionEsperada) {
   pattern_t patrones[1];
-
   INICIAR_PATRON(patrones[0], textoPatron);
 
   search_patterns_sequential(dna, strlen(dna), patrones, 1);
@@ -56,12 +54,10 @@ void casos_1_2_3_4(char *nombre, char *dna, char *textoPatron, int estadoEsperad
   search_patterns_pthread(dna, strlen(dna), patrones, 1, 1);
   char nombrePthread[100];
   sprintf(nombrePthread, "%s Pthread", nombre);
-  verificarResultado(nombrePthread, patrones[0], estadoEsperado,posicionEsperada);
+  verificarResultado(nombrePthread, patrones[0], estadoEsperado, posicionEsperada);
 }
 
-// CASO 5 Comparar secuencial vs pthread
-void caso_5(char *nombre, char *dna, char *textoPatron,int numHilos) {
-
+void caso_5(char *nombre, char *dna, char *textoPatron, int numHilos) {
   pattern_t secuencial[1];
   pattern_t paralelo[1];
 
@@ -72,7 +68,6 @@ void caso_5(char *nombre, char *dna, char *textoPatron,int numHilos) {
   search_patterns_pthread(dna, strlen(dna), paralelo, 1, numHilos);
 
   pruebasTotales++;
-
   int iguales = 1;
 
   if (secuencial[0].state != paralelo[0].state || secuencial[0].found_at != paralelo[0].found_at) {
@@ -87,9 +82,11 @@ void caso_5(char *nombre, char *dna, char *textoPatron,int numHilos) {
   }
 }
 
-int main() {
-
-  printf("TESTS\n\n");
+void run_app_tests() {
+  printf("=== EJECUTANDO PRUEBAS UNITARIAS (TESTS) ===\n\n");
+  
+  pruebasTotales = 0; 
+  pruebasBuenas = 0;
 
   casos_1_2_3_4("Caso 1", "ATGCGT", "ATG", MATCH, 0);
   casos_1_2_3_4("Caso 2", "ATGCGT", "CGT", MATCH, 3);
@@ -97,8 +94,5 @@ int main() {
   casos_1_2_3_4("Caso 4", "AAAAAA", "AAA", MATCH, 0);
   caso_5("Caso 5 Comparacion", "ATGCGTATGAAA", "ATG", 4);
 
-  printf("\n");
-  printf("Pruebas pasadas: %d/%d\n", pruebasBuenas, pruebasTotales);
-
-  return 0;
+  printf("\nPruebas pasadas: %d/%d\n", pruebasBuenas, pruebasTotales);
 }

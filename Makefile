@@ -1,72 +1,54 @@
-# --- COMPILER CFG ---
-CC         := cc
-MPI_CC     := mpicc
+# --- CONFIGURACION DEL COMPILADOR ---
+# Usamos mpicc para todo porque el main ahora incluye referencias a MPI
+CC         := mpicc
 CFLAGS     := -Wall -Wextra -Wpedantic -std=c11 -Iinclude
 LDFLAGS    := -lpthread
 
-# --- DIRECTORIES ---
+# --- DIRECTORIOS ---
 SRC_DIR    := src
+TEST_DIR   := tests
 OBJ_DIR    := build
 BIN_DIR    := bin
 
-# --- OBJECTS ---
-BASE_OBJ   := $(OBJ_DIR)/base.o
-SEQ_OBJ    := $(OBJ_DIR)/base_sequential.o
-PTH_OBJ    := $(OBJ_DIR)/base_pthread.o
-MPI_OBJ    := $(OBJ_DIR)/base_mpi.o
-PARAMS_OBJ := $(OBJ_DIR)/params.o
+# --- OBJETOS ---
+# Lista de todos los archivos .o que necesitamos generar
+OBJS       := $(OBJ_DIR)/main.o \
+              $(OBJ_DIR)/base.o \
+              $(OBJ_DIR)/base_sequential.o \
+              $(OBJ_DIR)/base_pthread.o \
+              $(OBJ_DIR)/base_pthreads.o \
+              $(OBJ_DIR)/base_mpi.o \
+              $(OBJ_DIR)/params.o \
+              $(OBJ_DIR)/tests.o
 
-# --- TARGETS ---
-TARGET_SEQ := $(BIN_DIR)/base_sequential
-TARGET_PTH := $(BIN_DIR)/base_pthread
-TARGET_MPI := $(BIN_DIR)/base_mpi
+# --- EJECUTABLE FINAL ---
+TARGET     := $(BIN_DIR)/programa
 
-# --- RULES ---
-# Default [all targets]
-all: $(TARGET_SEQ) $(TARGET_PTH) $(TARGET_MPI)
-	@echo "All targets compiled. Me go home."
+# --- REGLAS PRINCIPALES ---
+all: $(TARGET)
+	@echo "Todo compilado correctamente. Listo para ejecutar."
 
-seq: $(TARGET_SEQ)
-	@echo "Sequential target ready. Me go home."
-
-pth: $(TARGET_PTH)
-	@echo "Pthreads target ready. Me go home."
-
-mpi: $(TARGET_MPI)
-	@echo "MPI target ready. Me go home."
-
-# Linking Sequential
-$(TARGET_SEQ): $(SEQ_OBJ) $(BASE_OBJ) $(PARAMS_OBJ) | $(BIN_DIR)
-	$(CC) $^ -o $@
-	@echo "Compilation of $@ completed."
-
-# Linking Pthreads
-$(TARGET_PTH): $(PTH_OBJ) $(BASE_OBJ) $(PARAMS_OBJ) | $(BIN_DIR)
+# Como enlazar el ejecutable final
+$(TARGET): $(OBJS) | $(BIN_DIR)
 	$(CC) $^ $(LDFLAGS) -o $@
-	@echo "Compilation of $@ completed."
+	@echo "Ejecutable creado en $@"
 
-# Linking MPI
-$(TARGET_MPI): $(MPI_OBJ) $(BASE_OBJ) $(PARAMS_OBJ) | $(BIN_DIR)
-	$(MPI_CC) $^ -o $@
-	@echo "Compilation of $@ completed."
-
-# Compilation generic rule
+# --- REGLAS DE COMPILACION DE OBJETOS ---
+# Regla para compilar los .c que estan en src/
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
-# Compilation specific rule for MPI
-$(TARGET_MPI): CC = $(MPI_CC)
 
-# Folders
+# Regla especifica para compilar el archivo de tests/
+$(OBJ_DIR)/tests.o: $(TEST_DIR)/tests.c | $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Regla para crear las carpetas si no existen
 $(BIN_DIR) $(OBJ_DIR):
 	mkdir -p $@
 
-# Cleaning
+# --- LIMPIEZA ---
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
-	@echo "Cleaning done. Me go home."
+	@echo "Limpieza completada. Carpetas build y bin eliminadas."
 
-test: 
-	gcc -O2 -o run_tests tests/tests.c src/base.c src/params.c src/base_sequential.c src/base_pthread.c -I include/ -lpthread -DTESTING
-
-# Treat as execution cmds
-.PHONY: all clean seq pth mpi tests
+.PHONY: all clean

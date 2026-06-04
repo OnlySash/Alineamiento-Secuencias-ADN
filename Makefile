@@ -1,8 +1,7 @@
 # --- CONFIGURACION DEL COMPILADOR ---
-# Usamos mpicc para todo porque el main ahora incluye referencias a MPI
 CC         := mpicc
-CFLAGS     := -Wall -Wextra -Wpedantic -std=c11 -Iinclude
-LDFLAGS    := -lpthread
+CFLAGS     := -Wall -Wextra -Wpedantic -std=c11 -Iinclude -DCL_TARGET_OPENCL_VERSION=300
+LDFLAGS    := -lpthread -lOpenCL
 
 # --- DIRECTORIOS ---
 SRC_DIR    := src
@@ -17,20 +16,20 @@ OBJS       := $(OBJ_DIR)/main.o \
               $(OBJ_DIR)/base_sequential.o \
               $(OBJ_DIR)/base_pthreads.o \
               $(OBJ_DIR)/base_mpi.o \
+              $(OBJ_DIR)/base_opencl.o \
               $(OBJ_DIR)/params.o \
               $(OBJ_DIR)/tests.o
 
 # --- EJECUTABLE FINAL ---
-TARGET     := $(BIN_DIR)/programa
-
+TARGET     := $(BIN_DIR)/dna_search
 # --- REGLAS PRINCIPALES ---
 all: $(TARGET)
-	@echo "Todo compilado correctamente. Listo para ejecutar."
+	@echo "Listo para ejecución."
 
 # Como enlazar el ejecutable final
 $(TARGET): $(OBJS) | $(BIN_DIR)
 	$(CC) $^ $(LDFLAGS) -o $@
-	@echo "Ejecutable creado en $@"
+	@echo "Ejecutable creado en ./$@"
 
 # --- REGLAS DE COMPILACION DE OBJETOS ---
 # Regla para compilar los .c que estan en src/
@@ -48,6 +47,6 @@ $(BIN_DIR) $(OBJ_DIR):
 # --- LIMPIEZA ---
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
-	@echo "Limpieza completada. Carpetas build y bin eliminadas."
+	@echo "Limpieza completada. '/build' y '/bin' removidas."
 
 .PHONY: all clean

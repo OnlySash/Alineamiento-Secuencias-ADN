@@ -1,34 +1,6 @@
-#include "../include/params.h"
 #include "../include/base_mpi.h"
 
 #define MASTER 0
-
-/*
-void search_pattern_mpi(const char* dna_string, int start, int end, pattern_t* pttn_struct) {
-    char* pttn = pttn_struct->pattern;
-    int pttn_length = pttn_struct->length;
-    int match_at = MISSING;
-    int search_end = end - pttn_length;
-
-    for (int i = start; i <= search_end; i++) {
-        int j;
-        for (j = 0; j < pttn_length; j++) {
-            if (dna_string[i + j] != pttn[j]) break;
-        }
-        if (j == pttn_length) {
-            match_at = i;
-            break;
-        }
-    }
-
-    if (match_at != MISSING) {
-        pttn_struct->found_at = match_at;
-        pttn_struct->state = MATCH;
-    } else {
-        pttn_struct->state = MISSING;
-    }
-}
-*/
 
 void compute_mpi_chunks(int rank, int size, int chain_len, thread_args_t *process_data) {
     int subchain_len = chain_len / size;
@@ -38,7 +10,6 @@ void compute_mpi_chunks(int rank, int size, int chain_len, thread_args_t *proces
     process_data->start_index = subchain_len * rank + offset;
     process_data->end_index = process_data->start_index + subchain_len + (offset < remainder);
 }
-
 
 void reduce_mpi_matches(int size, int pattern_num, pattern_t *patterns, int *all_results) {
     for (int p = 0; p < pattern_num; p++) {
@@ -124,16 +95,3 @@ void run_mpi(int argc, char *argv[], params_t params) {
     free(patterns);
     free(dna_chain);
 }
-
-/*
-#ifndef TESTING
-int main(int argc, char *argv[]) {
-    params_t params;
-    parse_arguments(argc, argv, &params);
-    
-    run_mpi(argc, argv, params);
-
-    return 0;
-}
-#endif
-*/

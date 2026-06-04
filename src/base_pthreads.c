@@ -1,176 +1,92 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <string.h>
-#include <pthread.h>
+#include "../include/base_pthreads.h"
 
-#include "../include/base.h"
-#include "../include/params.h"
+void queue_init(task_queue_t* q) {
+    q->front = 0;
+    q->rear = 0;
+    q->count = 0;
+    pthread_mutex_init(&q->mutex, NULL);
+    pthread_cond_init(&q->not_empty, NULL);
+    pthread_cond_init(&q->not_full, NULL);
+}
 
-typedef struct {
-    int pattern_index;
-} task_t;
+void queue_destroy(task_queue_t* q) {
+    pthread_mutex_destroy(&q->mutex);
+    pthread_cond_destroy(&q->not_empty);
+    pthread_cond_destroy(&q->not_full);
+}
 
-typedef struct {
-    task_t* tasks;
-    int front;
-    int rear;
-    int count;
-    int capacity;
-    pthread_mutex_t mutex;
-    pthread_cond_t not_empty;
-    pthread_cond_t not_full;
-} task_queue_t;
-
-task_queue_t task_queue;
-
-pattern_t* global_patterns;
-char* global_dna;
-int global_dna_len;
-
-int shutdown_pool = 0;
-int pending_tasks = 0;
-
-pthread_mutex_t pending_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t all_done = PTHREAD_COND_INITIALIZER;
-
-void enqueue(task_queue_t* q, int pattern_index)
-{
+void queue_push(task_queue_t* q, int pattern_index) {
     pthread_mutex_lock(&q->mutex);
-    while(q->count == q->capacity)
+    // Wait until there is space in the queue
+    while (q->count == QUEUE_CAPACITY) {
         pthread_cond_wait(&q->not_full, &q->mutex);
-    q->tasks[q->rear].pattern_index = pattern_index;
-    q->rear = (q->rear + 1) % q->capacity;
+    }
+    q->buffer[q->rear] = pattern_index;
+    q->rear = (q->rear + 1) % QUEUE_CAPACITY;
     q->count++;
+    
+    // Signal that the queue is not empty
     pthread_cond_signal(&q->not_empty);
     pthread_mutex_unlock(&q->mutex);
 }
 
-int dequeue(task_queue_t* q)
-{
+int queue_pop(task_queue_t* q) {
     pthread_mutex_lock(&q->mutex);
-    while(q->count == 0 && !shutdown_pool)
+    // Wait until there is at least one item in the queue
+    while (q->count == 0) {
         pthread_cond_wait(&q->not_empty, &q->mutex);
-    if(shutdown_pool)
-    {
-        pthread_mutex_unlock(&q->mutex);
-        return -1;
     }
-    int pattern_index = q->tasks[q->front].pattern_index;
-    q->front = (q->front + 1) % q->capacity;
+    int pattern_index = q->buffer[q->front];
+    q->front = (q->front + 1) % QUEUE_CAPACITY;
     q->count--;
+    
+    // Signal that the queue is not full
     pthread_cond_signal(&q->not_full);
     pthread_mutex_unlock(&q->mutex);
+    
     return pattern_index;
 }
 
-
-// char* vector_alloc(int n) {
-//     char *vector = (char *) malloc((n + 1) * sizeof(char));
-//     if (vector == NULL) { exit(1); }
-//     vector[n] = '\0';
-//     return vector;
-// }
-
-// pattern_t* pattern_alloc(int rows, int cols) {
-//     pattern_t* patterns = (pattern_t*) malloc(rows * sizeof(pattern_t));
-//     if (patterns != NULL) {
-//         for (int i = 0; i < rows; i++) {
-//             patterns[i].pattern = vector_alloc(cols);
-//             patterns[i].found_at = -1;
-//             patterns[i].state = QUEUED;
-//         }
-//     }
-//     return patterns;
-// }
-
-void dna_gen_secuential(char* dna_ptr, int n) {
-    for (int i = 0; i < n; i++) dna_ptr[i] = NUCLEOTIDES[rand() % 4];
-    dna_ptr[n] = '\0';
-}
-
-void pattern_gen_secuential(pattern_t* patterns, int min_l, int max_l, int k) {
-    for (int i = 0; i < k; i++) {
-        int len = (min_l != max_l) ? rand() % (max_l - min_l + 1) + min_l : max_l;
-        for (int j = 0; j < len; j++) patterns[i].pattern[j] = NUCLEOTIDES[rand() % 4];
-        patterns[i].pattern[len] = '\0';
-        patterns[i].state = QUEUED; 
-    }
-}
-
-/*
-void buscar_un_patron(const char* dna, int dna_len, pattern_t* pttn_struct) {
-    char* p = pttn_struct->pattern;
-    int plen = strlen(p);
-    for (int i = 0; i <= dna_len - plen; i++) {
-        int j;
-        for (j = 0; j < plen; j++) {
-            if (dna[i + j] != p[j]) break;
-        }
-        if (j == plen) {
-            pttn_struct->found_at = i;
-            pttn_struct->state = MATCH;
-            return;
-        }
-    }
-    pttn_struct->state = MISSING;
-}
-*/
-
-//NUEVO Thread worker
-void* pool_worker(void* arg)
-{
-    (void)arg;
-    while(1)
-    {
-        int idx = dequeue(&task_queue);
-        if(idx == -1)
-            break;
-            
-        search_single_pattern(
-            global_dna,
-            0,
-            global_dna_len,
-            &global_patterns[idx]
-        );
+void* pool_worker(void* arg) {
+    worker_context_t* context = (worker_context_t*)arg;
+    
+    while(1) {
+        int index = queue_pop(context->queue);
         
-        pthread_mutex_lock(&pending_mutex);
-        pending_tasks--;
-        if(pending_tasks == 0)
-            pthread_cond_signal(&all_done);
-        pthread_mutex_unlock(&pending_mutex);
-    }
-
-    return NULL;
-}
-
-void* thread_worker(void* arg) {
-    thread_args_t* data = (thread_args_t*) arg;
-
-    for (int p = data->start_index; p < data->end_index; p++) {
-        search_single_pattern(data->dna_string, 0, data->dna_string_length, &data->patterns[p]);
+        // Check for command to terminate the thread
+        if (index == CMD_POOL_TERM) break; 
+            
+        // Perform the pattern search for the given index
+        search_single_pattern(context->dna, 0, context->dna_len, &context->patterns[index]);
     }
     return NULL;
 }
 
 void search_patterns_pthread(const char* dna_string, int dna_string_length, pattern_t* patterns, int k_patterns, int num_threads) {
+    task_queue_t queue;
+    queue_init(&queue);
+    
+    worker_context_t context = { &queue, dna_string, dna_string_length, patterns };
     pthread_t threads[num_threads];
-    thread_args_t args[num_threads];
-    int patterns_per_thread = k_patterns / num_threads;
-
+    
+    // 1. Create worker threads
     for (int i = 0; i < num_threads; i++) {
-        args[i].dna_string = dna_string;
-        args[i].dna_string_length = dna_string_length;
-        args[i].patterns = patterns;
-        args[i].start_index = i * patterns_per_thread;
-        args[i].end_index = (i == num_threads - 1) ? k_patterns : (i + 1) * patterns_per_thread;
-
-        pthread_create(&threads[i], NULL, thread_worker, &args[i]);
+        pthread_create(&threads[i], NULL, pool_worker, &context);
     }
-
+    // 2. Push patterns onto the queue
+    for (int i = 0; i < k_patterns; i++) {
+        queue_push(&queue, i);
+    }
+    // 3. Push signals to terminate the worker threads at the end of the queue
+    for (int i = 0; i < num_threads; i++) {
+        queue_push(&queue, CMD_POOL_TERM);
+    }
+    // 4. Wait for all worker threads to complete
     for (int i = 0; i < num_threads; i++) {
         pthread_join(threads[i], NULL);
     }
+    
+    queue_destroy(&queue);
 }
 
 void run_pthread_pool(params_t params) {
@@ -183,61 +99,17 @@ void run_pthread_pool(params_t params) {
     char *dna_string = vector_alloc(n);
     pattern_t *patterns = pattern_alloc(k_patterns, params.pattern_length);
     
-    dna_gen_secuential(dna_string, n);
-    pattern_gen_secuential(patterns, params.pattern_length, params.pattern_length, k_patterns);
-
-    // Configuracion de variables globales necesarias para el pool
-    global_dna = dna_string;
-    global_dna_len = n;
-    global_patterns = patterns;
-    pending_tasks = k_patterns;
-
-    task_queue.capacity = k_patterns;
-    task_queue.front = 0;
-    task_queue.rear = 0;
-    task_queue.count = 0;
-    task_queue.tasks = malloc(sizeof(task_t) * k_patterns);
-
-    pthread_mutex_init(&task_queue.mutex, NULL);
-    pthread_cond_init(&task_queue.not_empty, NULL);
-    pthread_cond_init(&task_queue.not_full, NULL);
+    dna_generation(dna_string, n);
+    pattern_generation(patterns, params.pattern_length, k_patterns);
 
     printf("Iniciando busqueda paralela con Pool de %d hilos...\n", num_threads);
     
-    pthread_t threads[num_threads];
-    for (int i = 0; i < num_threads; i++) {
-        pthread_create(&threads[i], NULL, pool_worker, NULL);
-    }
+    search_patterns_pthread(dna_string, n, patterns, k_patterns, num_threads);
 
-    // Insertar todas las tareas (patrones a buscar) en la cola
     for(int i = 0; i < k_patterns; i++) {
-        enqueue(&task_queue, i);
-    }
-
-    // Esperar con variable de condicion a que los hilos terminen todas las tareas
-    pthread_mutex_lock(&pending_mutex);
-    while(pending_tasks > 0) {
-        pthread_cond_wait(&all_done, &pending_mutex);
-    }
-    pthread_mutex_unlock(&pending_mutex);
-
-    shutdown_pool = 1;
-    pthread_cond_broadcast(&task_queue.not_empty);
-    
-    for (int i = 0; i < num_threads; i++) {
-        pthread_join(threads[i], NULL);
-    }
-
-    int lim = (k_patterns < 5) ? k_patterns : 5;
-    for(int i = 0; i < lim; i++) {
         printf("Patron %d [%s] - Estado: [%d] Pos: %d\n", 
                 i, patterns[i].pattern, patterns[i].state, patterns[i].found_at);
     }
-
-    free(task_queue.tasks);
-    pthread_mutex_destroy(&task_queue.mutex);
-    pthread_cond_destroy(&task_queue.not_empty);
-    pthread_cond_destroy(&task_queue.not_full);
 
     for (int i = 0; i < k_patterns; i++) {
         free(patterns[i].pattern);

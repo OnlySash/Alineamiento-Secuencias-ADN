@@ -11,7 +11,7 @@ typedef struct {
     int k_patterns;
     int pattern_length;
     int num_threads;
-    int mode; // 1=Secuencial, 2=Pthreads, 3=MPI, 4=Tests
+    int mode;
 } params_t;
 
 /**

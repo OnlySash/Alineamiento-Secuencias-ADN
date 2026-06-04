@@ -1,6 +1,6 @@
 CompileFlags:
   Add: 
     - "-Iinclude"
-    - "-I/usr/lib/x86_64-linux-gnu/openmpi/include" # Reemplaza con tu ruta de 'mpicc --showme:compile'
+    - "-I/usr/lib/x86_64-linux-gnu/openmpi/include" # Reemplazar con ruta de "mpicc --showme:compile"
     - "-Wall"
     - "-std=c11"

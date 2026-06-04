@@ -5,6 +5,8 @@
 #include "../include/base.h"
 #include "../include/params.h"
 #include "../include/base_sequential.h"
+#include "../include/base_pthreads.h"
+#include "../include/base_opencl.h"
 #include "../include/test.h"
 
 void run_pthread_pool(params_t params);
@@ -47,11 +49,16 @@ int main(int argc, char *argv[]) {
             break;
 
         case 4:
+            printf("=== MODO SELECCIONADO: OPENCL ===\n");
+            run_opencl(params);
+            break;
+        
+        case 5:
             run_app_tests();
             break;
-
+        
         default:
-            fprintf(stderr, "Error: Modo no valido. Use valores del 1 al 4.\n");
+            fprintf(stderr, "Error: Modo no válido. Use valores del 1 al 5.\n");
             return EXIT_FAILURE;
     }
 

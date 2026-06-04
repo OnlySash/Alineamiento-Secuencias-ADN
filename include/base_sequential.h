@@ -1,6 +1,7 @@
 #ifndef BASE_SEQUENTIAL_H
 #define BASE_SEQUENTIAL_H
 #include "base.h"
+#include "params.h"
 
 /**
  * \brief Sequentially searches for all patterns in the DNA string.

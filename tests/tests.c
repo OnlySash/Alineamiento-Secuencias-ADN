@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-
-#include "../include/base.h"
-#include "../include/base_pthread.h"
-#include "../include/base_sequential.h"
 #include "../include/test.h"
 
 #define REINICIAR_PATRON(p)                                                    \

@@ -59,6 +59,7 @@ void run_mpi(int argc, char *argv[], params_t params) {
     for (int p_i = 0; p_i < params.k_patterns; p_i++) {
         MPI_Bcast(patterns[p_i].pattern, params.pattern_length + 1, MPI_CHAR, MASTER, MPI_COMM_WORLD);
     }
+    
     MPI_Barrier(MPI_COMM_WORLD);
 
     thread_args_t process_data;

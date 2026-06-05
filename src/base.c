@@ -47,17 +47,17 @@ void pattern_generation(pattern_t* patterns, int length, int k_patterns) {
 // Funcion unificada para buscar un patron, usada tanto por secuencial como por pthreads y MPI
 // Recibe 'start' y 'end' para soportar tanto Pthreads (todo el ADN) como MPI (fragmentos)
 void search_single_pattern(const char* dna, int start, int end, pattern_t* pttn_struct) {
-    char* p = pttn_struct->pattern;
-    int plen = pttn_struct->length;
+    char* pattern = pttn_struct->pattern;
+    int length = pttn_struct->length;
     // Buscamos hasta donde el patron todavia quepa en el limite (end)
-    int search_end = end - plen;
+    int search_end = end - length;
 
     for (int i = start; i <= search_end; i++) {
         int j;
-        for (j = 0; j < plen; j++) {
-            if (dna[i + j] != p[j]) break;
+        for (j = 0; j < length; j++) {
+            if (dna[i + j] != pattern[j]) break;
         }
-        if (j == plen) {
+        if (j == length) {
             pttn_struct->found_at = i;
             pttn_struct->state = MATCH; 
             return; 

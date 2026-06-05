@@ -20,22 +20,7 @@ int main(int argc, char *argv[]) {
     switch (params.mode) {
         case 1:
             printf("=== MODO SELECCIONADO: SECUENCIAL ===\n");
-            srand(time(NULL));
-            char *dna_seq = vector_alloc(params.dna_length);
-            pattern_t *pttn_seq = pattern_alloc(params.k_patterns, params.pattern_length);
-            
-            dna_generation(dna_seq, params.dna_length);
-            pattern_generation(pttn_seq, params.pattern_length, params.k_patterns);
-
-            search_patterns_sequential(dna_seq, params.dna_length, pttn_seq, params.k_patterns);
-            
-            for (int i = 0; i < (params.k_patterns < 5 ? params.k_patterns : 5); i++) {
-                printf("Pattern %d [%s] - Estado: [%d]\n", i, pttn_seq[i].pattern, pttn_seq[i].state);
-            }
-
-            for (int i = 0; i < params.k_patterns; i++) free(pttn_seq[i].pattern);
-            free(pttn_seq);
-            free(dna_seq);
+            run_sequential(params);
             break;
 
         case 2:

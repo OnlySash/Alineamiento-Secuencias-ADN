@@ -167,6 +167,8 @@ void finalize_opencl(opencl_env_t* env) {
 }
 
 void run_opencl(params_t params) {
+    printf("=== MODO SELECCIONADO: OPENCL ===\n");
+    
     int n = params.dna_length;
     int k_patterns = params.k_patterns;
 

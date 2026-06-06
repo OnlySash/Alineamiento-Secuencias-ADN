@@ -90,6 +90,8 @@ void search_patterns_pthread(const char* dna_string, int dna_string_length, patt
 }
 
 void run_pthread_pool(params_t params) {
+    printf("=== MODO SELECCIONADO: PTHREADS (POOL) ===\n");
+    
     int n = params.dna_length;
     int k_patterns = params.k_patterns;
     int num_threads = params.num_threads;

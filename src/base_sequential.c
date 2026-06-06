@@ -8,6 +8,8 @@ void search_patterns_sequential(const char* dna_string, int dna_string_length, p
 }
 
 void run_sequential(params_t params) {
+    printf("=== MODO SELECCIONADO: SECUENCIAL ===\n");
+    
     char *dna = vector_alloc(params.dna_length);
     pattern_t *patterns = pattern_alloc(params.k_patterns, params.pattern_length);
 

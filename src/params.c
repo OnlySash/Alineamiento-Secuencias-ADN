@@ -45,6 +45,6 @@ void parse_arguments(int argc, char *argv[], params_t *params) {
         }
     }
 
-    printf("Ejecutando con: n=%d, k=%d, l=%d, t=%d, modo=%d\n", 
+    printf("Ejecutando con: n=%d, k=%d, l=%d, t=%d, m=%d\n", 
            params->dna_length, params->k_patterns, params->pattern_length, params->num_threads, params->mode);
 }

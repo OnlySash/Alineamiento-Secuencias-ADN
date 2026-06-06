@@ -14,22 +14,18 @@ int main(int argc, char *argv[]) {
 
     switch (params.mode) {
         case 1:
-            printf("=== MODO SELECCIONADO: SECUENCIAL ===\n");
             run_sequential(params);
             break;
 
         case 2:
-            printf("=== MODO SELECCIONADO: PTHREADS (POOL) ===\n");
             run_pthread_pool(params);
             break;
 
         case 3:
-            printf("=== MODO SELECCIONADO: MPI ===\n");
             run_mpi(argc, argv, params);
             break;
 
         case 4:
-            printf("=== MODO SELECCIONADO: OPENCL ===\n");
             run_opencl(params);
             break;
         

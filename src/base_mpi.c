@@ -51,6 +51,8 @@ void run_mpi(int argc, char *argv[], params_t params) {
     pattern_t *patterns = pattern_alloc(params.k_patterns, params.pattern_length);
 
     if (rank == MASTER) {
+        srand(time(NULL));
+
         dna_generation(dna_chain, params.dna_length);
         pattern_generation(patterns, params.pattern_length, params.k_patterns);
     }

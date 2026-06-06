@@ -1,0 +1,48 @@
+/* Configuración del lienzo general */
+body {
+    background-color: #1e1e2e;
+    color: #cdd6f4;
+    font-family: 'Courier New', Courier, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 20px;
+}
+
+/* El Canvas generado por p5.js automáticamente */
+canvas {
+    border: 2px solid #89b4fa;
+    border-radius: 8px;
+    margin-top: 20px;
+    box-shadow: 0 0 20px rgba(137, 180, 250, 0.15);
+}
+
+/* Contenedor de la botonera */
+.controls {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+}
+
+/* Diseño de botones estilo UNIX moderno */
+button {
+    background-color: #89b4fa;
+    border: none;
+    padding: 10px 20px;
+    color: #1e1e2e;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+/* Efectos Hover y Active */
+button:hover {
+    background-color: #b4befe;
+}
+
+button:active {
+    transform: scale(0.96);
+}

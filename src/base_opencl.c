@@ -3,7 +3,7 @@
 char* read_kernel_source(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (!file) {
-        fprintf(stderr, "Error en OpenCL: No se encontro %s\n", filename);
+        fprintf(stderr, "Error (OpenCL): No se encontró %s\n", filename);
         exit(1);
     }
     fseek(file, 0, SEEK_END);
@@ -26,14 +26,14 @@ opencl_env_t init_opencl_env(const char* kernel_path) {
     // clGetPlatformIDs: GPU drivers are registered as "platforms". Get the first one available (assuming only one GPU).
     err = clGetPlatformIDs(1, &platform, NULL);
     if (err != CL_SUCCESS) {
-        fprintf(stderr, "Error Crítico OpenCL: clGetPlatformIDs. Código %d\n", err);
+        fprintf(stderr, "Error Crítico (OpenCL): clGetPlatformIDs. Código %d\n", err);
         exit(1);
     }
 
     // clGetDeviceIDs: Looks inside the platform for a GPU device and saves its ID in env.device. (allows GPU-specific operations later)
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &env.device, NULL);
     if (err != CL_SUCCESS) {
-        fprintf(stderr, "Error Crítico OpenCL: clGetDeviceIDs. Código %d\n", err);
+        fprintf(stderr, "Error Crítico (OpenCL): clGetDeviceIDs. Código %d\n", err);
         exit(1);
     }
 
@@ -41,13 +41,13 @@ opencl_env_t init_opencl_env(const char* kernel_path) {
     // clCreateContext: Isolates the GPU device in a "sandbox" where we can manage memory and execution without affecting the rest of the system.
     env.context = clCreateContext(NULL, 1, &env.device, NULL, NULL, &err);
     if (err != CL_SUCCESS) {
-        fprintf(stderr, "Error Crítico OpenCL: clCreateContext. Código %d\n", err);
+        fprintf(stderr, "Error Crítico (OpenCL): clCreateContext. Código %d\n", err);
         exit(1);
     }
     // clCreateCommandQueueWithProperties: Opens a "communication channel" to the GPU, allowing us to send commands and data for processing.
     env.queue = clCreateCommandQueueWithProperties(env.context, env.device, 0, &err);
     if (err != CL_SUCCESS) {
-        fprintf(stderr, "Error Crítico OpenCL: clCreateCommandQueueWithProperties. Código %d\n", err);
+        fprintf(stderr, "Error Crítico (OpenCL): clCreateCommandQueueWithProperties. Código %d\n", err);
         exit(1);
     }
 
@@ -172,11 +172,14 @@ void run_opencl(params_t params) {
 
     char *dna_string = vector_alloc(n);
     pattern_t *patterns = pattern_alloc(k_patterns, params.pattern_length);
+
+    srand(time(NULL));
+
     dna_generation(dna_string, n);
     pattern_generation(patterns, params.pattern_length, k_patterns);
 
     printf("Inicializando OpenCL y compilando kernel...\n");
-    opencl_env_t ocl_env = init_opencl_env("src/kernel.cl");
+    opencl_env_t ocl_env = init_opencl_env("assets/kernels/kernel.cl");
 
     printf("Lanzando procesamiento en GPU...\n");
     search_patterns_opencl(&ocl_env, dna_string, n, patterns, k_patterns);

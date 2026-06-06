@@ -1,16 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
-#include "../include/base.h"
 #include "../include/params.h"
 #include "../include/base_sequential.h"
 #include "../include/base_pthreads.h"
 #include "../include/base_opencl.h"
 #include "../include/test.h"
-
-void run_pthread_pool(params_t params);
-void run_mpi(int argc, char *argv[], params_t params);
 
 int main(int argc, char *argv[]) {
     params_t params;

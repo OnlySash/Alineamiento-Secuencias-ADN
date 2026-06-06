@@ -11,6 +11,8 @@ void run_sequential(params_t params) {
     char *dna = vector_alloc(params.dna_length);
     pattern_t *patterns = pattern_alloc(params.k_patterns, params.pattern_length);
 
+    srand(time(NULL));
+
     dna_generation(dna, params.dna_length);
     pattern_generation(patterns, params.pattern_length, params.k_patterns);
 

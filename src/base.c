@@ -27,8 +27,6 @@ pattern_t* pattern_alloc(int rows, int cols) {
 }
 
 void dna_generation(char* dna_ptr, int n) {
-    srand(time(NULL));
-    
     for (int i = 0; i < n; i++) {
         dna_ptr[i] = NUCLEOTIDES[rand() % 4];
     }
@@ -36,8 +34,6 @@ void dna_generation(char* dna_ptr, int n) {
 }
 
 void pattern_generation(pattern_t* patterns, int length, int k_patterns) {
-    srand(time(NULL));
-
     for (int i = 0; i < k_patterns; i++) {
         for (int j = 0; j < length; j++) {
             patterns[i].pattern[j] = NUCLEOTIDES[rand() % 4];

@@ -44,9 +44,13 @@ $(OBJ_DIR)/tests.o: $(TEST_DIR)/tests.c | $(OBJ_DIR)
 $(BIN_DIR) $(OBJ_DIR):
 	mkdir -p $@
 
+# --- PRUEBAS ---
+test: $(TARGET)
+	@echo "Ejecutando suite de pruebas unitarias..."
+	./$(TARGET) -m 5
 # --- LIMPIEZA ---
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
 	@echo "Limpieza completada. '/build' y '/bin' removidas."
 
-.PHONY: all clean
+.PHONY: all clean test

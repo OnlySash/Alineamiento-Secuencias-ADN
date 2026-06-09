@@ -30,8 +30,8 @@ opencl_env_t init_opencl_env(const char* kernel_path) {
         exit(1);
     }
 
-    // clGetDeviceIDs: Looks inside the platform for a GPU device and saves its ID in env.device. (allows GPU-specific operations later)
-    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &env.device, NULL);
+    // clGetDeviceIDs: Looks inside the platform for a device and saves its ID in env.device.
+    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 1, &env.device, NULL);
     if (err != CL_SUCCESS) {
         fprintf(stderr, "Error Crítico (OpenCL): clGetDeviceIDs. Código %d\n", err);
         exit(1);

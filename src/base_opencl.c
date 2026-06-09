@@ -186,6 +186,7 @@ void run_opencl(params_t params) {
     printf("Lanzando procesamiento en GPU...\n");
     search_patterns_opencl(&ocl_env, dna_string, n, patterns, k_patterns);
 
+    //TODO QUITAR LIMITACION
     int lim = (k_patterns < 5) ? k_patterns : 5;
     for(int i = 0; i < lim; i++) {
         printf("Patron %d [%s] - Estado: [%d] Pos: %d\n", 

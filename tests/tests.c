@@ -1,5 +1,6 @@
 #include "../include/test.h"
 #include "../include/base_opencl.h"
+#include <string.h>
 
 #define REINICIAR_PATRON(p)                                                    \
   (p).state = QUEUED;                                                          \
@@ -38,19 +39,22 @@ void verificarResultado(char *nombre, pattern_t patron, int estadoEsperado, int 
 void casos_1_2_3_4(char *nombre, char *dna, char *textoPatron, int estadoEsperado, int posicionEsperada) {
   pattern_t patrones[1];
   INICIAR_PATRON(patrones[0], textoPatron);
+  unsigned long dna_len = strlen(dna);
 
   // 1. Prueba Secuencial
-  search_patterns_sequential(dna, strlen(dna), patrones, 1);
+  search_patterns_sequential(dna, dna_len, patrones, 1);
   char nombreSec[100];
   sprintf(nombreSec, "%s Secuencial", nombre);
   verificarResultado(nombreSec, patrones[0], estadoEsperado, posicionEsperada);
-
+  printf("ADN: %s PATTRON: %s ESTADO_ESPERADO: %d POS_ESPERADA: %d\n",dna, textoPatron, estadoEsperado,  posicionEsperada);
+  
   // 2. Prueba Pthreads
   REINICIAR_PATRON(patrones[0]);
-  search_patterns_pthread(dna, strlen(dna), patrones, 1, 1);
+  search_patterns_pthread(dna, dna_len, patrones, 1, 1);
   char nombrePthread[100];
   sprintf(nombrePthread, "%s Pthread", nombre);
   verificarResultado(nombrePthread, patrones[0], estadoEsperado, posicionEsperada);
+  
 
   // 3. Prueba OpenCL
   REINICIAR_PATRON(patrones[0]);
@@ -59,13 +63,14 @@ void casos_1_2_3_4(char *nombre, char *dna, char *textoPatron, int estadoEsperad
   opencl_env_t ocl_env = init_opencl_env("assets/kernels/kernel.cl");
   
   // Pasamos &ocl_env como primer parámetro
-  search_patterns_opencl(&ocl_env, dna, strlen(dna), patrones, 1); 
+  search_patterns_opencl(&ocl_env, dna, dna_len, patrones, 1); 
   
   // LIBERAR ENTORNO
   finalize_opencl(&ocl_env);
 
   char nombreOpenCL[100];
   sprintf(nombreOpenCL, "%s OpenCL", nombre);
+  printf("ADN: %s PATTRON: %s ESTADO_ENCONTRADO: %d POS_ENCONTRADA: %d\n",dna, textoPatron, patrones[0].state, patrones[0].found_at);
   verificarResultado(nombreOpenCL, patrones[0], estadoEsperado, posicionEsperada);
 }
 
@@ -78,13 +83,15 @@ void caso_5(char *nombre, char *dna, char *textoPatron, int numHilos) {
   INICIAR_PATRON(paralelo[0], textoPatron);
   INICIAR_PATRON(opencl_pat[0], textoPatron);
 
+  unsigned long dna_len = strlen(dna);
+
   // Ejecutamos versión Secuencial y Pthreads
-  search_patterns_sequential(dna, strlen(dna), secuencial, 1);
-  search_patterns_pthread(dna, strlen(dna), paralelo, 1, numHilos);
+  search_patterns_sequential(dna, dna_len, secuencial, 1);
+  search_patterns_pthread(dna, dna_len, paralelo, 1, numHilos);
 
   // Ejecutamos versión OpenCL
   opencl_env_t ocl_env = init_opencl_env("assets/kernels/kernel.cl");
-  search_patterns_opencl(&ocl_env, dna, strlen(dna), opencl_pat, 1);
+  search_patterns_opencl(&ocl_env, dna, dna_len, opencl_pat, 1);
   finalize_opencl(&ocl_env);
 
   pruebasTotales++;

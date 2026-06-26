@@ -40,11 +40,23 @@ void parse_arguments(int argc, char *argv[], params_t *params) {
                 break;
             case '?':
             default:
-                fprintf(stderr, "Uso: %s -n [adn len] -k [patrones] -l [patron len] -t [hilos] -m [1:Sec, 2:Pth, 3:MPI, 4:OpenCL, 5: Tests]\n", argv[0]);
+                print_params_usage(*params);
                 exit(EXIT_FAILURE);
         }
     }
+}
 
+void print_params_usage(params_t params) {
+    printf("Uso: ./dna_search [OPCIONES]\n");
+    printf("OPCIONES:\n");
+    printf("  -n, --dna_length     Longitud de la cadena de ADN (default: %d)\n", params.dna_length);
+    printf("  -k, --patterns       Número de patrones a buscar (default: %d)\n", params.k_patterns);
+    printf("  -l, --p_length       Longitud de cada patrón (default: %d)\n", params.pattern_length);
+    printf("  -t, --threads        Número de hilos para modos paralelos (default: %d)\n", params.num_threads);
+    printf("  -m, --mode           Modo de ejecución: 1=Secuencial, 2=Pthreads, 3=MPI, 4=OpenCL, 5=Tests (default: %d)\n", params.mode);
+}
+
+void print_params_execution(params_t params) {
     printf("Ejecutando con: n=%d, k=%d, l=%d, t=%d, m=%d\n", 
-           params->dna_length, params->k_patterns, params->pattern_length, params->num_threads, params->mode);
+        params.dna_length, params.k_patterns, params.pattern_length, params.num_threads, params.mode);
 }

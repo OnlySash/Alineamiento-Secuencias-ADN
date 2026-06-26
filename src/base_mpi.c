@@ -1,7 +1,5 @@
 #include "../include/base_mpi.h"
 
-#define MASTER 0
-
 void compute_mpi_chunks(int rank, int size, int chain_len, thread_args_t *process_data) {
     int subchain_len = chain_len / size;
     int remainder = chain_len % size;
@@ -28,31 +26,12 @@ void reduce_mpi_matches(int size, int pattern_num, pattern_t *patterns, int *all
     }
 }
 
-void print_results(int pattern_num, pattern_t *patterns) {
-    for (int i = 0; i < pattern_num; i++) {
-        printf("PATTERN_%d [%s]   STATE: ", i, patterns[i].pattern);
-        if (patterns[i].state == MATCH) {
-            printf("MATCH    at i = %d\n", patterns[i].found_at);
-        } else if (patterns[i].state == MISSING) {
-            printf("MISSING\n");
-        } else {
-            printf("QUEUED\n");
-        }
-    }
-}
-
-void run_mpi(int argc, char *argv[], params_t params) {
-    int rank, size;
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+void run_mpi(params_t params, int rank, int size) {
 
     char *dna_chain = vector_alloc(params.dna_length);
     pattern_t *patterns = pattern_alloc(params.k_patterns, params.pattern_length);
 
     if (rank == MASTER) {
-        printf("=== MODO SELECCIONADO: MPI ===\n");
-        
         srand(time(NULL));
 
         dna_generation(dna_chain, params.dna_length);
@@ -69,6 +48,9 @@ void run_mpi(int argc, char *argv[], params_t params) {
     thread_args_t process_data;
     compute_mpi_chunks(rank, size, params.dna_length, &process_data);
 
+    if (rank == MASTER) {
+        printf("Iniciando busqueda paralela con MPI en %d procesos...\n", size);
+    }
     for (int p = 0; p < params.k_patterns; p++) {
         search_single_pattern(dna_chain, process_data.start_index, process_data.end_index, &patterns[p]); 
     }
@@ -90,10 +72,10 @@ void run_mpi(int argc, char *argv[], params_t params) {
 
     if (rank == MASTER) {
         reduce_mpi_matches(size, params.k_patterns, patterns, all_results);
-        print_results(params.k_patterns, patterns);
+        print_results(patterns, params.k_patterns);
         free(all_results);
     }
-    MPI_Finalize();
+    
     for (int i = 0; i < params.k_patterns; i++) {
         free(patterns[i].pattern);
     }

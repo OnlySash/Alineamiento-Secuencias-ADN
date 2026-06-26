@@ -65,3 +65,16 @@ void search_single_pattern(const char* dna, int start, int end, pattern_t* pttn_
     }
     pttn_struct->state = MISSING;
 }
+
+void print_results(pattern_t *patterns, int k_patterns) {
+    for (int i = 0; i < k_patterns; i++) {
+        printf("PATTERN_%d [%s]   STATE: ", i, patterns[i].pattern);
+        if (patterns[i].state == MATCH) {
+            printf("MATCH    at i = %d\n", patterns[i].found_at);
+        } else if (patterns[i].state == MISSING) {
+            printf("MISSING\n");
+        } else {
+            printf("QUEUED\n");
+        }
+    }
+}

@@ -90,7 +90,6 @@ void search_patterns_pthread(const char* dna_string, int dna_string_length, patt
 }
 
 void run_pthread_pool(params_t params) {
-    printf("=== MODO SELECCIONADO: PTHREADS (POOL) ===\n");
     
     int n = params.dna_length;
     int k_patterns = params.k_patterns;
@@ -104,14 +103,11 @@ void run_pthread_pool(params_t params) {
     dna_generation(dna_string, n);
     pattern_generation(patterns, params.pattern_length, k_patterns);
 
-    printf("Iniciando busqueda paralela con Pool de %d hilos...\n", num_threads);
+    printf("Iniciando busqueda paralela con Pthreads en %d hilos...\n", num_threads);
     
     search_patterns_pthread(dna_string, n, patterns, k_patterns, num_threads);
 
-    for(int i = 0; i < k_patterns; i++) {
-        printf("Patron %d [%s] - Estado: [%d] Pos: %d\n", 
-                i, patterns[i].pattern, patterns[i].state, patterns[i].found_at);
-    }
+    print_results(patterns, k_patterns);
 
     for (int i = 0; i < k_patterns; i++) {
         free(patterns[i].pattern);

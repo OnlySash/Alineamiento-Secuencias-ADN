@@ -30,7 +30,7 @@ opencl_env_t init_opencl_env(const char* kernel_path) {
         exit(1);
     }
 
-    // clGetDeviceIDs: Looks inside the platform for a device and saves its ID in env.device.
+    // clGetDeviceIDs: Looks inside the platform for a device and saves its ID in env.device. (allows GPU-specific operations later)
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 1, &env.device, NULL);
     if (err != CL_SUCCESS) {
         fprintf(stderr, "Error Crítico (OpenCL): clGetDeviceIDs. Código %d\n", err);
@@ -167,7 +167,6 @@ void finalize_opencl(opencl_env_t* env) {
 }
 
 void run_opencl(params_t params) {
-    printf("=== MODO SELECCIONADO: OPENCL ===\n");
     
     int n = params.dna_length;
     int k_patterns = params.k_patterns;
@@ -183,15 +182,10 @@ void run_opencl(params_t params) {
     printf("Inicializando OpenCL y compilando kernel...\n");
     opencl_env_t ocl_env = init_opencl_env("assets/kernels/kernel.cl");
 
-    printf("Lanzando procesamiento en GPU...\n");
+    printf("Iniciando búsqueda paralela con OpenCL en GPU...\n");
     search_patterns_opencl(&ocl_env, dna_string, n, patterns, k_patterns);
 
-    //TODO QUITAR LIMITACION
-    int lim = (k_patterns < 5) ? k_patterns : 5;
-    for(int i = 0; i < lim; i++) {
-        printf("Patron %d [%s] - Estado: [%d] Pos: %d\n", 
-                i, patterns[i].pattern, patterns[i].state, patterns[i].found_at);
-    }
+    print_results(patterns, k_patterns);
 
     finalize_opencl(&ocl_env);
     

@@ -26,7 +26,7 @@ extern const char NUCLEOTIDES[];
  * \struct pattern_t
  * \brief Represents a DNA pattern and its search state.
  */
-typedef struct {
+typedef struct pattern_t {
     char* pattern;      /**< DNA pattern string */
     int length;         /**< Length of the DNA pattern */
     int found_at;       /**< Position where the pattern was found */
@@ -88,9 +88,11 @@ void search_single_pattern(const char* dna, int start, int end, pattern_t* patte
  * \brief Prints the final search state and position for each pattern to standard output.
  * * Displays whether each pattern was found (MATCH) or not (MISSING). If found, 
  * it outputs the 0-based index of its first occurrence in the DNA sequence.
- * \param pattern_num The total number of patterns in the array.
+ * \param k_patterns The total number of patterns in the array.
  * \param patterns Array of pattern_t structures containing the final matching results.
  */
 void print_results(pattern_t *patterns, int k_patterns);
+
+void generate_data_log(pattern_t *patterns, int k_patterns);
 
 #endif

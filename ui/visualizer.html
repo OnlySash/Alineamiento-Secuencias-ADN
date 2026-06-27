@@ -13,7 +13,12 @@
 
     <h2>Visualizador de Alineamiento ADN 🧬</h2>
     
+    <div id="canvas-container"></div>
+    
     <div class="controls">
+        <input type="file" id="dataUpload" accept=".json,.log" style="display: none;" onchange="loadData(event)">
+        <button onclick="document.getElementById('dataUpload').click()"> 📂 Cargar datos </button>
+        
         <button id="playBtn" onclick="togglePlay()"> ▶ </button>
         <button onclick="stepBackward()"> ⏮ </button>
         <button onclick="stepForward()"> ⏭  </button>

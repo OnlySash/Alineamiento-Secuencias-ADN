@@ -14,7 +14,7 @@
 #define QUEUE_CAPACITY 1024
 /**
  * \def CMD_POOL_TERM
- * \brief Emulates a SIGTERM signal to stop the worker thread gracefully.
+ * \brief Emulates a SIGTERM signal to stop the worker thread.
  */
 #define CMD_POOL_TERM -1
 
@@ -24,7 +24,7 @@
  * * Utilizes a mutex and condition variables to safely manage the producer-consumer
  * workflow between the main thread and the worker pool.
  */
-typedef struct {
+typedef struct task_queue_t {
     int buffer[QUEUE_CAPACITY];
     int front;
     int rear;

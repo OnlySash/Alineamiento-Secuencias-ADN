@@ -14,7 +14,7 @@ typedef enum mode_t {
  * @brief Centralize all configuration parameters for the DNA pattern search.
  */
 // params.h
-typedef struct {
+typedef struct params_t {
     int dna_length;
     int k_patterns;
     int pattern_length;

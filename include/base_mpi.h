@@ -5,6 +5,8 @@
 
 #include <mpi.h>
 
+#define MASTER 0
+
 /**
  * \brief Searches for a single pattern within a specific range of the DNA string using MPI.
  * \param dna_string Pointer to the main DNA string.
@@ -39,15 +41,6 @@ void compute_mpi_chunks(int rank, int size, int chain_len, thread_args_t *proces
  */
 void reduce_mpi_matches(int size, int pattern_num, pattern_t *patterns, int *all_results);
 
-/**
- * \brief Prints the final search state and position for each pattern to standard output.
- * * Displays whether each pattern was found (MATCH) or not (MISSING). If found, 
- * it outputs the 0-based index of its first occurrence in the DNA sequence.
- * \param pattern_num The total number of patterns in the array.
- * \param patterns Array of pattern_t structures containing the final matching results.
- */
-void print_results(int pattern_num, pattern_t *patterns);
+void run_mpi(params_t params, int rank, int size);
 
-void run_mpi(int argc, char *argv[], params_t params);
-
-#endif
+#endif // BASE_MPI_H

@@ -14,4 +14,4 @@ void search_patterns_sequential(const char* dna_string, int dna_string_length, p
 
 void run_sequential(params_t params);
 
-#endif
+#endif // BASE_SEQUENTIAL_H

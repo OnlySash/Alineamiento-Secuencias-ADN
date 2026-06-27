@@ -1,5 +1,5 @@
-#ifndef BASE_PTHREAD_H
-#define BASE_PTHREAD_H
+#ifndef BASE_PTHREADS_H
+#define BASE_PTHREADS_H
 
 #include "base.h"
 #include "params.h"
@@ -111,4 +111,4 @@ void search_patterns_pthread(const char* dna_string, int dna_string_length, patt
  */
 void run_pthread_pool(params_t params);
 
-#endif
+#endif // BASE_PTHREADS_H

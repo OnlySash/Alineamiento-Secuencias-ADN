@@ -80,8 +80,17 @@ void pattern_generation(pattern_t* patterns, int length, int k_patterns);
  * \param dna Pointer to the main DNA string.
  * \param start Starting index for the search.
  * \param end Ending index for the search.
- * \param pttn_struct Pointer to the pattern_t struct representing the pattern to search.
+ * \param pattern Pointer to the pattern_t struct representing the pattern to search.
  */
-void search_single_pattern(const char* dna, int start, int end, pattern_t* pttn_struct);
+void search_single_pattern(const char* dna, int start, int end, pattern_t* pattern);
+
+/**
+ * \brief Prints the final search state and position for each pattern to standard output.
+ * * Displays whether each pattern was found (MATCH) or not (MISSING). If found, 
+ * it outputs the 0-based index of its first occurrence in the DNA sequence.
+ * \param pattern_num The total number of patterns in the array.
+ * \param patterns Array of pattern_t structures containing the final matching results.
+ */
+void print_results(pattern_t *patterns, int k_patterns);
 
 #endif

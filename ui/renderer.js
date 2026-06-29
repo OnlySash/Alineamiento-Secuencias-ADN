@@ -1,252 +1,302 @@
-/*  ====== TODO: ======
- * - Ajustar representación en la cantidad de hilos y su color asociado para que esta sea dinámica
- ** y no esté limitada a 4 hilos/procesos.
- * - Agregar el modo MPI (secuencial y pthreads comparten esta implementación)
- *
+/* ====== TODO: ======
  * AJUSTE EN EL PROGRAMA:
  * - Agregar las funciones de generación de el/los .logs para probar la visualización con datos reales.
-*/
+  ==================== */
+
 // === CFG GRAFICA GLOBAL ===
-const CONFIG = {
-    // Dimensiones del Lienzo
-    canvasWidth:    1000,
-    canvasHeight:   700,
-    
-    // Cadena de ADN
-    dnaStartX:          50,
-    dnaStartY:          50,
-    dnaBoxSize:         40,
-    dnaSegmentLength:   20, // Nucleótidos máximos por fila
-    dnaRowSpacing:      80, // Espacio entre cada fila de ADN
-    
-    // Impresión de patrones
-    queueStartY:        450, // Altura donde empiezan a dibujarse los patrones
-    queueBoxSize:       30,  // Tamaño de las cajas de los patrones
-    queueStartX:        50,  // Margen izquierdo
-    queueLimitX:        950, // Margen derecho (para salto de línea)
-    queueRowSpacing:    50,  // Espaciado entre filas de patrones
-    queueSpacing:       25   // Espaciado entre un patrón y otro
+const config = {
+  fps: 3,
+  canvasWidth: 1000,
+  canvasHeight: 700,
+
+  // Cuadrícula de ADN
+  dna: {
+    startX: 50,
+    startY: 50,
+    boxSize: 40,
+    segmentLength: 22,
+    rowSpacing: 80,
+  },
+
+  // Cuadrícula de patrones
+  pattern: {
+    startX: 50,
+    startY: 450,
+    limitX: 950,
+    boxSize: 30,
+    rowSpacing: 50,
+    spacing: 25,
+  },
 };
 
-// Paleta de Colores
-const COLORS = {
-    bg:     '#1e1e2e',
-    text:   '#cdd6f4',
-    match:  '#a6e3a1',
-    miss:   '#f38ba8',
-    thrd1:  '#89b4fa',
-    thrd2:  '#f9e2af',
-    thrd3:  '#cba6f7',
-    thrd4:  '#fab387'
+const colors = {
+  bg: "#1e1e2e",
+  text: "#cdd6f4",
+  match: "#a6e3a1",
+  miss: "#f38ba8",
+  threads: ["#89b4fa", "#f9e2af", "#cba6f7", "#fab387", "#a6adc8"],
 };
 
-// === ESTADO GLOBAL DE DATOS ===
-let dnaSequence = "";
-let patterns    = [];
-let logData     = [];
-let mode        = "";
-let numIds      = 0;
+// === DATOS DE UI ===
+const UIData = {
+  dna: "",
+  patterns: [],
+  logs: [],
+  mode: "",
+  totalThreads: 0,
 
-let currentStep = 0;
-let isPlaying   = false;
+  currentStep: 0,
+  isPlaying: false,
+
+  get currentLog() {
+    return this.logs[this.currentStep - 1] || null;
+  },
+};
+
 let playBtn;
 
+// === P5.JS ===
 function setup() {
-    let canvas = createCanvas(CONFIG.canvasWidth, CONFIG.canvasHeight);
-    let container = document.getElementById('canvas-container');
-    if (container) canvas.parent('canvas-container');
-    
-    frameRate(10);
-    textAlign(CENTER, CENTER);
-    textSize(16);
-    
-    playBtn = document.getElementById("playBtn");
-    dnaSequence = "";
+  let canvas = createCanvas(config.canvasWidth, config.canvasHeight);
+  let container = document.getElementById("canvas-container");
+  if (container) canvas.parent("canvas-container");
+
+  frameRate(fps);
+  textAlign(CENTER, CENTER);
+  textSize(16);
+  playBtn = document.getElementById("playBtn");
 }
 
 function draw() {
-    background(COLORS.bg);
-    
-    if (dnaSequence.length > 0) drawDNA();
+  background(colors.bg);
 
-    if (isPlaying && logData.length > 0) {
-        if (currentStep < logData.length) currentStep++;
-        else {
-            if(playBtn) playBtn.innerText = "▶";
-            isPlaying = false;
-        }
-    }
+  if (UIData.dna.length === 0) return;
 
-    let stepIndex = isPlaying ? currentStep - 1 : currentStep;
-    
-    if (logData.length > 0 && stepIndex >= 0 && stepIndex < logData.length) {
-        drawScanner(logData[stepIndex]);
-    }
+  drawDNA();
+  handlePlayback();
 
-    if (patterns.length > 0) drawPatternQueue(stepIndex);
+  const activeLog = UIData.currentLog;
+  if (activeLog) {
+    drawScanner(activeLog);
+  }
+
+  drawPatternQueue();
+}
+
+// === FUNCIONES DE DIBUJO / RENDERIZADO ===
+function getGridCoords(index) {
+  let col = index % config.dna.segmentLength;
+  let row = Math.floor(index / config.dna.segmentLength);
+  return {
+    x: config.dna.startX + col * config.dna.boxSize,
+    y: config.dna.startY + row * config.dna.rowSpacing,
+  };
 }
 
 function drawDNA() {
-    for (let i = 0; i < dnaSequence.length; i++) {
-        let col = i % CONFIG.dnaSegmentLength;
-        let row = Math.floor(i / CONFIG.dnaSegmentLength);
-        
-        let x = CONFIG.dnaStartX + col * CONFIG.dnaBoxSize;
-        let y = CONFIG.dnaStartY + row * CONFIG.dnaRowSpacing;
+  fill(colors.bg);
+  stroke(colors.text);
+  strokeWeight(1);
 
-        fill(COLORS.bg);
-        stroke(COLORS.text);
-        strokeWeight(1);
-        rect(x, y, CONFIG.dnaBoxSize, CONFIG.dnaBoxSize, 4);
-        
-        noStroke();
-        fill(COLORS.text);
-        text(dnaSequence[i], x + CONFIG.dnaBoxSize/2, y + CONFIG.dnaBoxSize/2);
-    }
-}
+  for (let i = 0; i < UIData.dna.length; i++) {
+    let pos = getGridCoords(i);
 
-function drawScanner(step) {
-    let thrdColor = COLORS['thrd' + ((step.id % 4) + 1)];
-    let isMatch = (step.match === 1);
-    
-    let patternObj = patterns[step.patId];
-    if (!patternObj || !patternObj.seq) return;
-    let targetString = patternObj.seq;
-    
-    fill(isMatch ? COLORS.match + 'AA': thrdColor + '44');
-    stroke(isMatch ? COLORS.match : thrdColor);
-    strokeWeight(3);
-    
-    for (let k = 0; k < targetString.length; k++) {
-        let globalPos = step.pos + k;
-        if (globalPos >= dnaSequence.length) break;
+    rect(pos.x, pos.y, config.dna.boxSize, config.dna.boxSize, 4);
 
-        let col = globalPos % CONFIG.dnaSegmentLength;
-        let row = Math.floor(globalPos / CONFIG.dnaSegmentLength);
-        let x = CONFIG.dnaStartX + col * CONFIG.dnaBoxSize;
-        let y = CONFIG.dnaStartY + row * CONFIG.dnaRowSpacing;
-
-        rect(x, y, CONFIG.dnaBoxSize, CONFIG.dnaBoxSize, 4);
-    }
-    
-    let firstCol = step.pos % CONFIG.dnaSegmentLength;
-    let firstRow = Math.floor(step.pos / CONFIG.dnaSegmentLength);
-    let textX = CONFIG.dnaStartX + firstCol * CONFIG.dnaBoxSize;
-    let textY = CONFIG.dnaStartY + firstRow * CONFIG.dnaRowSpacing;
-
+    push();
     noStroke();
-    fill(COLORS.text);
-    textAlign(LEFT, BOTTOM);
-    let txt = isMatch ? "encontrado" : "analizando";
-    text(`Hilo ${step.id} ${txt}: ${targetString}`, textX, textY - 5);
-    textAlign(CENTER, CENTER);
+    fill(colors.text);
+    text(
+      UIData.dna[i],
+      pos.x + config.dna.boxSize / 2,
+      pos.y + config.dna.boxSize / 2,
+    );
+    pop();
+  }
 }
 
-function drawPatternQueue(stepIndex) {
-    let currentY = CONFIG.queueStartY;
-    let currentX = CONFIG.queueStartX;
-    
-    fill(COLORS.text);
-    noStroke();
-    textAlign(LEFT, CENTER);
-    text("Inventario de Patrones:", CONFIG.queueStartX, currentY - 25);
-    textAlign(CENTER, CENTER);
+function drawScanner(logEntry) {
+  let pattern = UIData.patterns[logEntry.patId];
+  if (!pattern || !pattern.seq) return;
 
-    let tempStates = {};
-    for (let i = 0; i < patterns.length; i++) tempStates[i] = 'queued';
+  let sequence = pattern.seq;
+  let isMatch = logEntry.match === 1;
 
-    for (let i = 0; i <= stepIndex; i++) {
-        let log = logData[i];
-        if (!log) continue;
-        let pId = log.patId;
-        if (tempStates[pId] !== 'match') {
-            tempStates[pId] = (log.match === 1) ? 'match' : 'missing';
-        }
-    }
+  let threadHex = colors.threads[logEntry.id % colors.threads.length];
+  let boxFill = color(isMatch ? colors.match : threadHex);
+  boxFill.setAlpha(isMatch ? 170 : 68);
 
-    for (let i = 0; i < patterns.length; i++) {
-        let patString = patterns[i].seq;
-        let state = tempStates[i];
-        
-        let patTotalWidth = patString.length * CONFIG.queueBoxSize;
-        if (currentX + patTotalWidth > CONFIG.queueLimitX) {
-            currentX = CONFIG.queueStartX;
-            currentY += CONFIG.queueRowSpacing;
-        }
-        
-        let boxFill, boxStroke;
-        if (state === 'queued') {
-            boxFill = COLORS.bg;
-            boxStroke = COLORS.text + '44';
-        } else if (state === 'match') {
-            boxFill = COLORS.match + '44';
-            boxStroke = COLORS.match;      
-        } else if (state === 'missing') {
-            boxFill = COLORS.miss + '44';
-            boxStroke = COLORS.miss;
-        }
+  let boxStroke = color(isMatch ? colors.match : threadHex);
 
-        for (let k = 0; k < patString.length; k++) {
-            fill(boxFill);
-            stroke(boxStroke);
-            strokeWeight(2);
-            rect(currentX, currentY, CONFIG.queueBoxSize, CONFIG.queueBoxSize, 4);
-            
-            noStroke();
-            fill(COLORS.text);
-            text(patString[k], currentX + CONFIG.queueBoxSize/2, currentY + CONFIG.queueBoxSize/2);
-            currentX += CONFIG.queueBoxSize;
-        }
-        currentX += CONFIG.queueSpacing;
-    }
+  fill(boxFill);
+  stroke(boxStroke);
+  strokeWeight(3);
+
+  for (let k = 0; k < sequence.length; k++) {
+    let globalIndex = logEntry.pos + k;
+    if (globalIndex >= UIData.dna.length) break;
+
+    let pos = getGridCoords(globalIndex);
+    rect(pos.x, pos.y, config.dna.boxSize, config.dna.boxSize, 4);
+  }
+
+  let startPos = getGridCoords(logEntry.pos);
+  push();
+  noStroke();
+  fill(colors.text);
+  textAlign(LEFT, BOTTOM);
+  let statusText = isMatch ? "¡Encontrado!" : "Buscando...";
+  text(
+    `[THRD_${logEntry.id}] ${statusText} : ${sequence}`,
+    startPos.x,
+    startPos.y - 5,
+  );
+  pop();
 }
 
-// =========== CONTROL DE EVENTOS ===========
+function drawPatternQueue() {
+  let currentX = config.pattern.startX;
+  let currentY = config.pattern.startY;
+
+  push();
+  fill(colors.text);
+  noStroke();
+  textAlign(LEFT, CENTER);
+  text("Patrones:", config.pattern.startX, currentY - 25);
+  pop();
+
+  let patternStatus = new Array(UIData.patterns.length).fill("queued");
+
+  for (let i = 0; i < UIData.currentStep; i++) {
+    let log = UIData.logs[i];
+    // CORRECCIÓN 1: 'patId' en lugar de 'patternID'
+    if (log && patternStatus[log.patId] !== "match") {
+      patternStatus[log.patId] = log.match === 1 ? "match" : "missing";
+    }
+  }
+
+  for (let pIndex = 0; pIndex < UIData.patterns.length; pIndex++) {
+    let sequence = UIData.patterns[pIndex].seq;
+    let status = patternStatus[pIndex];
+
+    let pTotalWidth = sequence.length * config.pattern.boxSize;
+    if (currentX + pTotalWidth > config.pattern.limitX) {
+      currentX = config.pattern.startX;
+      currentY += config.pattern.rowSpacing;
+    }
+
+    let boxFill = color(colors.bg);
+    let boxStroke = color(100, 100, 100, 100); // Color por defecto (queued)
+
+    if (status === "match") {
+      boxFill = color(colors.match);
+      boxFill.setAlpha(68);
+      boxStroke = color(colors.match);
+    } else if (status === "missing") {
+      boxFill = color(colors.miss);
+      boxFill.setAlpha(68);
+      boxStroke = color(colors.miss);
+    }
+
+    for (let k = 0; k < sequence.length; k++) {
+      fill(boxFill);
+      stroke(boxStroke);
+      strokeWeight(2);
+      rect(
+        currentX,
+        currentY,
+        config.pattern.boxSize,
+        config.pattern.boxSize,
+        4,
+      );
+
+      push();
+      noStroke();
+      fill(colors.text);
+      text(
+        sequence[k],
+        currentX + config.pattern.boxSize / 2,
+        currentY + config.pattern.boxSize / 2,
+      );
+      pop();
+
+      currentX += config.pattern.boxSize;
+    }
+    currentX += config.pattern.spacing;
+  }
+}
+
+// === REPRODUCCIÓN ===
+function handlePlayback() {
+  if (UIData.isPlaying && UIData.logs.length > 0) {
+    if (UIData.currentStep < UIData.logs.length) {
+      UIData.currentStep++;
+    } else {
+      UIData.isPlaying = false;
+      updatePlayButton();
+    }
+  }
+}
 
 function togglePlay() {
-    if (logData.length === 0) return;
-    isPlaying = !isPlaying;
-    if(playBtn) playBtn.innerText = isPlaying ? "⏸" : "▶";
+  if (UIData.logs.length === 0) return;
+
+  if (UIData.currentStep >= UIData.logs.length) {
+    UIData.currentStep = 0;
+  }
+
+  UIData.isPlaying = !UIData.isPlaying;
+  updatePlayButton();
 }
 
 function stepForward() {
-    if (isPlaying) togglePlay();
-    if (currentStep < logData.length - 1) currentStep++;
+  UIData.isPlaying = false;
+  if (UIData.currentStep < UIData.logs.length) {
+    UIData.currentStep++;
+  }
+  updatePlayButton();
 }
 
 function stepBackward() {
-    if (isPlaying) togglePlay();
-    if (currentStep > 0) currentStep--;
+  UIData.isPlaying = false;
+  if (UIData.currentStep > 0) {
+    UIData.currentStep--;
+  }
+  updatePlayButton();
 }
 
 function resetSim() {
-    currentStep = 0;
-    isPlaying = false;
-    if(playBtn) playBtn.innerText = "▶";
+  UIData.currentStep = 0;
+  UIData.isPlaying = false;
+  updatePlayButton();
 }
 
-// =========== CARGA Y PARSEO DEL ARCHIVO .LOG ===========
+function updatePlayButton() {
+  if (playBtn) playBtn.innerText = UIData.isPlaying ? "⏸" : "▶";
+}
+
+// === CARGA DE DATOS ===
 function loadData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = JSON.parse(e.target.result);
-            if(data.dna && data.patterns && data.logs) {
-                dnaSequence = data.dna;
-                patterns = data.patterns;
-                logData = data.logs;
-                if(data.mode) mode = data.mode;
-                if(data.n_ids) numIds = data.n_ids;
-                resetSim();
-            } else {
-                alert("Error al cargar el archivo. Formato JSON no válido.");
-            }
-        } catch(err) {
-            alert("Error al cargar el archivo. Sintaxis no válida");
-        }
-    };
-    reader.readAsText(file);
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.dna && data.patterns && data.logs) {
+        UIData.dna = data.dna;
+        UIData.patterns = data.patterns;
+        UIData.logs = data.logs;
+        UIData.mode = data.mode || "N/A";
+        UIData.totalThreads = data.n_ids || 1;
+        resetSim();
+      } else {
+        alert("Error: Propiedades faltantes en el JSON.");
+      }
+    } catch (err) {
+      alert("Error: Formato de archivo incorrecto.");
+    }
+  };
+  reader.readAsText(file);
 }

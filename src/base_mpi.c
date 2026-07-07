@@ -11,7 +11,7 @@ void compute_mpi_chunks(int rank, int size, int chain_len, thread_args_t *proces
 
 void reduce_mpi_matches(int size, int pattern_num, pattern_t *patterns, int *all_results) {
     for (int p = 0; p < pattern_num; p++) {
-        for (int r = 1; r < size; r++) { // Start from 1 since MASTER is on patterns already
+        for (int r = 1; r < size; r++) {
             int idx        = r * pattern_num * 2 + p * 2;
             int r_state    = all_results[idx];
             int r_found_at = all_results[idx + 1];
@@ -27,13 +27,11 @@ void reduce_mpi_matches(int size, int pattern_num, pattern_t *patterns, int *all
 }
 
 void run_mpi(params_t params, int rank, int size) {
-
     char *dna_chain = vector_alloc(params.dna_length);
     pattern_t *patterns = pattern_alloc(params.k_patterns, params.pattern_length);
 
     if (rank == MASTER) {
         srand(time(NULL));
-
         dna_generation(dna_chain, params.dna_length);
         pattern_generation(patterns, params.pattern_length, params.k_patterns);
     }
@@ -43,7 +41,12 @@ void run_mpi(params_t params, int rank, int size) {
         MPI_Bcast(patterns[p_i].pattern, params.pattern_length + 1, MPI_CHAR, MASTER, MPI_COMM_WORLD);
     }
     
+    // Sincronizacion previa e inicio de la medicion del tiempo
     MPI_Barrier(MPI_COMM_WORLD);
+    double t0 = 0.0, t1 = 0.0;
+    if (rank == MASTER) {
+        t0 = MPI_Wtime();
+    }
 
     thread_args_t process_data;
     compute_mpi_chunks(rank, size, params.dna_length, &process_data);
@@ -53,6 +56,14 @@ void run_mpi(params_t params, int rank, int size) {
     }
     for (int p = 0; p < params.k_patterns; p++) {
         search_single_pattern(dna_chain, process_data.start_index, process_data.end_index, &patterns[p]); 
+    }
+
+    // Sincronizacion para el calculo y parada del reloj
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == MASTER) {
+        t1 = MPI_Wtime();
+        // Tag que lee probar_rendimiento() en tests.c para capturar el tiempo real
+        printf("MPI_INTERNAL_TIME: %.6f\n", t1 - t0);
     }
 
     int local_results[params.k_patterns * 2];

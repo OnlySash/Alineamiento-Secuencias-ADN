@@ -9,6 +9,14 @@
 <body>
     <div class="header">
         <h2>Visualizador de Alineamiento ADN 🧬</h2>
+        
+        <div class="theme-switch-wrapper">
+            <span id="theme-icon">🌙</span>
+            <label class="theme-switch">
+                <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                <span class="slider round"></span>
+            </label>
+        </div>
     </div>
 
     <div class="config-panel">
@@ -17,24 +25,33 @@
                 <option value="1">1. Secuencial</option>
                 <option value="2">2. Pthreads</option>
                 <option value="3">3. MPI</option>
-                <option value="4">4. OpenCL</option>
             </select>
         </label>
         <label>ADN (N): <input type="number" id="sim-n" value="120"></label>
         <label>Patrones (K): <input type="number" id="sim-k" value="6"></label>
         <label>Longitud (L): <input type="number" id="sim-l" value="3"></label>
-        <label>Hilos/Nodos (T): <input type="number" id="sim-t" value="4"></label>
+        <label>Hilos (T): <input type="number" id="sim-t" value="4"></label>
         
         <button id="runBtn" class="run-btn" onclick="runSimulation()">Lanzar 🚀</button>
     </div>
+
+    <div class="controls-wrapper">
+        <div class="playback-controls">
+            <button id="playBtn" onclick="togglePlay()"> ▶ </button>
+            <button onclick="stepBackward()"> ⏮ </button>
+            <button onclick="stepForward()"> ⏭  </button>
+            <button onclick="resetSim()"> ↻ </button>
+        </div>
+        
+        <div class="fps-control">
+            <label>Velocidad:</label>
+            <input type="range" id="fpsSlider" min="1" max="60" value="3" oninput="updateFPS()">
+            <span id="fpsLabel">3 FPS</span>
+        </div>
+    </div>
     
-    <div id="canvas-container"></div>
-    
-    <div class="controls">
-        <button id="playBtn" onclick="togglePlay()"> ▶ </button>
-        <button onclick="stepBackward()"> ⏮ </button>
-        <button onclick="stepForward()"> ⏭  </button>
-        <button onclick="resetSim()"> ↻ </button>
+    <div id="canvas-wrapper">
+        <div id="canvas-container"></div>
     </div>
 
     <script src="renderer.js"></script>

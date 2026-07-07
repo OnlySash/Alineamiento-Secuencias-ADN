@@ -77,13 +77,19 @@ void print_results(pattern_t *patterns, int k_patterns) {
     }
 }
 
+// Fun. aux. para reconstruir pasos de MPI y asignar los IDs de hilo en la UI
+static void get_chunk_bounds(int rank, int size, int total_items, int *start, int *end) {
+    int chunk = total_items / size;
+    int remainder = total_items % size;
+    int offset = (rank < remainder) ? rank : remainder;
+    
+    *start = chunk * rank + offset;
+    *end = *start + chunk + (rank < remainder ? 1 : 0);
+}
+
 void generate_data_log(const char* dna, pattern_t *patterns, int k_patterns, int dna_length, int num_threads, int mode) {
     FILE *file = fopen("ui/data.json", "w"); 
-    
-    if (!file) {
-        fprintf(stderr, "Error: No se pudo crear data.json en ui/.\n");
-        return;
-    }
+    if (!file) return;
 
     fprintf(file, "{\n  \"dna\": \"%s\",\n", dna);
     
@@ -92,7 +98,6 @@ void generate_data_log(const char* dna, pattern_t *patterns, int k_patterns, int
         case 1: mode_str = "SEQUENTIAL"; break;
         case 2: mode_str = "PTHREADS"; break;
         case 3: mode_str = "MPI"; break;
-        case 4: mode_str = "OPENCL"; break;
     }
     fprintf(file, "  \"mode\": \"%s\",\n", mode_str);
     
@@ -109,28 +114,26 @@ void generate_data_log(const char* dna, pattern_t *patterns, int k_patterns, int
     
     for (int i = 0; i < k_patterns; i++) {
         int ui_thread_id = (i % active_threads) + 1; 
-        int start_pos = 0;
+        int start_pos = 0; 
         int scan_limit = (patterns[i].state == MATCH) ? patterns[i].found_at : (dna_length - patterns[i].length);
         
         if (mode == 3) {
-            int chunk_size = dna_length / active_threads;
-            int remainder = dna_length % active_threads;
+            for (int r = 0; r < active_threads; r++) {
+                int r_start, r_end;
+                get_chunk_bounds(r, active_threads, k_patterns, &r_start, &r_end); // <-- Dividiendo k_patterns
+                if (i >= r_start && i < r_end) {
+                    ui_thread_id = r + 1;
+                    break;
+                }
+            }
 
             if (patterns[i].state == MATCH) {
-                for (int r = 0; r < active_threads; r++) {
-                    int r_start = chunk_size * r + (r < remainder ? r : remainder);
-                    int r_end = r_start + chunk_size + (r < remainder ? 1 : 0);
-                    
-                    if (patterns[i].found_at >= r_start && patterns[i].found_at < r_end) {
-                        start_pos = r_start; // Empezar la animación donde el Rango empezó a leer
-                        ui_thread_id = r;    // El ID del hilo en la UI será el ID del Rango Real de MPI
-                        break;
-                    }
-                }
+                start_pos = patterns[i].found_at;
+                scan_limit = patterns[i].found_at;
             } else {
-                scan_limit = chunk_size + (0 < remainder ? 1 : 0) - patterns[i].length;
-                if(scan_limit < 0) scan_limit = 0;
-                ui_thread_id = 0;
+                start_pos = dna_length - patterns[i].length;
+                if (start_pos < 0) start_pos = 0;
+                scan_limit = start_pos;
             }
         }
 
@@ -145,5 +148,4 @@ void generate_data_log(const char* dna, pattern_t *patterns, int k_patterns, int
     }
     fprintf(file, "\n  ]\n}\n");
     fclose(file);
-    printf("Archivo 'data.json' generado en ui/.\n");
 }

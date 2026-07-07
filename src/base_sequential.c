@@ -23,6 +23,7 @@ void run_sequential(params_t params) {
     
     print_results(patterns, params.k_patterns);
 
+    generate_data_log(dna, patterns, params.k_patterns, params.dna_length, 1, SEQUENTIAL_MODE);
     for (int i = 0; i < params.k_patterns; i++) free(patterns[i].pattern);
     free(patterns);
     free(dna);

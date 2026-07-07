@@ -2,23 +2,35 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DNA Sequential/Parallel Search Visualizer - UCR</title>
-    
+    <title>DNA Parallel Search - UCR</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
-    
     <link rel="stylesheet" href="layout.css">
 </head>
 <body>
+    <div class="header">
+        <h2>Visualizador de Alineamiento ADN 🧬</h2>
+    </div>
 
-    <h2>Visualizador de Alineamiento ADN 🧬</h2>
+    <div class="config-panel">
+        <label>Modo (M): 
+            <select id="sim-mode">
+                <option value="1">1. Secuencial</option>
+                <option value="2">2. Pthreads</option>
+                <option value="3">3. MPI</option>
+                <option value="4">4. OpenCL</option>
+            </select>
+        </label>
+        <label>ADN (N): <input type="number" id="sim-n" value="120"></label>
+        <label>Patrones (K): <input type="number" id="sim-k" value="6"></label>
+        <label>Longitud (L): <input type="number" id="sim-l" value="3"></label>
+        <label>Hilos/Nodos (T): <input type="number" id="sim-t" value="4"></label>
+        
+        <button id="runBtn" class="run-btn" onclick="runSimulation()">Lanzar 🚀</button>
+    </div>
     
     <div id="canvas-container"></div>
     
     <div class="controls">
-        <input type="file" id="dataUpload" accept=".json,.log" style="display: none;" onchange="loadData(event)">
-        <button onclick="document.getElementById('dataUpload').click()"> 📂 Cargar datos </button>
-        
         <button id="playBtn" onclick="togglePlay()"> ▶ </button>
         <button onclick="stepBackward()"> ⏮ </button>
         <button onclick="stepForward()"> ⏭  </button>

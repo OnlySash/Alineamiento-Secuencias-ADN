@@ -1,8 +1,3 @@
-/* ====== TODO: ======
- * AJUSTE EN EL PROGRAMA:
- * - Agregar las funciones de generación de el/los .logs para probar la visualización con datos reales.
-  ==================== */
-
 // === CFG GRAFICA GLOBAL ===
 const config = {
   fps: 3,
@@ -12,7 +7,7 @@ const config = {
   // Cuadrícula de ADN
   dna: {
     startX: 50,
-    startY: 50,
+    startY: 80,
     boxSize: 40,
     segmentLength: 22,
     rowSpacing: 80,
@@ -35,6 +30,12 @@ const colors = {
   match: "#a6e3a1",
   miss: "#f38ba8",
   threads: ["#89b4fa", "#f9e2af", "#cba6f7", "#fab387", "#a6adc8"],
+  nucleotides: {
+    'A': '#a6e3a1',
+    'T': '#f38ba8',
+    'C': '#f9e2af',
+    'G': '#89b4fa' 
+  }
 };
 
 // === DATOS DE UI ===
@@ -61,7 +62,7 @@ function setup() {
   let container = document.getElementById("canvas-container");
   if (container) canvas.parent("canvas-container");
 
-  frameRate(fps);
+  frameRate(config.fps); 
   textAlign(CENTER, CENTER);
   textSize(16);
   playBtn = document.getElementById("playBtn");
@@ -94,20 +95,27 @@ function getGridCoords(index) {
 }
 
 function drawDNA() {
-  fill(colors.bg);
-  stroke(colors.text);
   strokeWeight(1);
 
   for (let i = 0; i < UIData.dna.length; i++) {
     let pos = getGridCoords(i);
-
+    let nuc = UIData.dna[i];
+    
+    let nucColorHex = colors.nucleotides[nuc] || colors.text;
+    let nucColor = color(nucColorHex);
+    
+    let boxFill = color(nucColorHex);
+    boxFill.setAlpha(30);
+    
+    fill(boxFill);
+    stroke(colors.text);
     rect(pos.x, pos.y, config.dna.boxSize, config.dna.boxSize, 4);
 
     push();
     noStroke();
-    fill(colors.text);
+    fill(nucColor);
     text(
-      UIData.dna[i],
+      nuc,
       pos.x + config.dna.boxSize / 2,
       pos.y + config.dna.boxSize / 2,
     );
@@ -157,23 +165,31 @@ function drawScanner(logEntry) {
 function drawPatternQueue() {
   let currentX = config.pattern.startX;
   let currentY = config.pattern.startY;
+  let matchesFound = 0;
+
+  let patternStatus = new Array(UIData.patterns.length).fill("queued");
+
+  for (let i = 0; i < UIData.currentStep; i++) {
+    let log = UIData.logs[i];
+    if (log && patternStatus[log.patId] !== "match") {
+      patternStatus[log.patId] = log.match === 1 ? "match" : "missing";
+    }
+  }
+
+  matchesFound = patternStatus.filter(status => status === "match").length;
 
   push();
   fill(colors.text);
   noStroke();
   textAlign(LEFT, CENTER);
   text("Patrones:", config.pattern.startX, currentY - 25);
+  
+  textAlign(RIGHT, CENTER);
+  textSize(18);
+  fill(colors.match);
+  text(`Coincidencias encontradas: ${matchesFound} / ${UIData.patterns.length}`, config.canvasWidth - 50, 30);
   pop();
 
-  let patternStatus = new Array(UIData.patterns.length).fill("queued");
-
-  for (let i = 0; i < UIData.currentStep; i++) {
-    let log = UIData.logs[i];
-    // CORRECCIÓN 1: 'patId' en lugar de 'patternID'
-    if (log && patternStatus[log.patId] !== "match") {
-      patternStatus[log.patId] = log.match === 1 ? "match" : "missing";
-    }
-  }
 
   for (let pIndex = 0; pIndex < UIData.patterns.length; pIndex++) {
     let sequence = UIData.patterns[pIndex].seq;
@@ -186,7 +202,7 @@ function drawPatternQueue() {
     }
 
     let boxFill = color(colors.bg);
-    let boxStroke = color(100, 100, 100, 100); // Color por defecto (queued)
+    let boxStroke = color(100, 100, 100, 100); 
 
     if (status === "match") {
       boxFill = color(colors.match);
@@ -210,9 +226,11 @@ function drawPatternQueue() {
         4,
       );
 
+      let nucColor = colors.nucleotides[sequence[k]] || colors.text;
+
       push();
       noStroke();
-      fill(colors.text);
+      fill(nucColor);
       text(
         sequence[k],
         currentX + config.pattern.boxSize / 2,
@@ -299,4 +317,38 @@ function loadData(event) {
     }
   };
   reader.readAsText(file);
+}
+
+async function runSimulation() {
+    const runBtn = document.getElementById('runBtn');
+    runBtn.innerText = "Ejecutando en C... ⏳";
+    runBtn.disabled = true;
+
+    const params = new URLSearchParams({
+        m: document.getElementById('sim-mode').value,
+        n: document.getElementById('sim-n').value,
+        k: document.getElementById('sim-k').value,
+        l: document.getElementById('sim-l').value,
+        t: document.getElementById('sim-t').value
+    });
+
+    try {
+        const response = await fetch(`/run-simulation?${params.toString()}`);
+        if (!response.ok) throw new Error("Error en la ejecución de C");
+        
+        const data = await response.json();
+        
+        UIData.dna = data.dna;
+        UIData.patterns = data.patterns;
+        UIData.logs = data.logs;
+        UIData.mode = data.mode;
+        resetSim();
+        
+        togglePlay(); 
+    } catch (err) {
+        alert("Error al ejecutar. Revisa la consola del servidor Node.");
+    } finally {
+        runBtn.innerText = "Lanzar 🚀";
+        runBtn.disabled = false;
+    }
 }

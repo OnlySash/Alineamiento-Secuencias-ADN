@@ -84,6 +84,7 @@ void run_mpi(params_t params, int rank, int size) {
     if (rank == MASTER) {
         reduce_mpi_matches(size, params.k_patterns, patterns, all_results);
         print_results(patterns, params.k_patterns);
+        generate_data_log(dna_chain, patterns, params.k_patterns, params.dna_length, size, MPI_MODE);
         free(all_results);
     }
     

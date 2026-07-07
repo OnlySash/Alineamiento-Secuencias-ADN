@@ -93,6 +93,6 @@ void search_single_pattern(const char* dna, int start, int end, pattern_t* patte
  */
 void print_results(pattern_t *patterns, int k_patterns);
 
-void generate_data_log(pattern_t *patterns, int k_patterns);
+void generate_data_log(const char* dna, pattern_t *patterns, int k_patterns, int dna_length, int num_threads, int mode);
 
 #endif

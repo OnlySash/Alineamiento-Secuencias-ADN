@@ -108,6 +108,7 @@ void run_pthread_pool(params_t params) {
     search_patterns_pthread(dna_string, n, patterns, k_patterns, num_threads);
 
     print_results(patterns, k_patterns);
+    generate_data_log(dna_string, patterns, k_patterns, n, num_threads, PTHREADS_MODE);
 
     for (int i = 0; i < k_patterns; i++) {
         free(patterns[i].pattern);

@@ -1,4 +1,3 @@
-/* Estructura general */
 body {
     background-color: #1e1e2e;
     color: #cdd6f4;
@@ -10,7 +9,6 @@ body {
     padding: 20px;
 }
 
-/* Canvas generado por p5.js */
 canvas {
     border: 2px solid #89b4fa;
     border-radius: 8px;
@@ -18,14 +16,12 @@ canvas {
     box-shadow: 0 0 20px rgba(137, 180, 250, 0.15);
 }
 
-/* Contenedor de botonera */
 .controls {
     margin-top: 20px;
     display: flex;
     gap: 15px;
 }
 
-/* Diseño de botones */
 button {
     background-color: #89b4fa;
     border: none;
@@ -38,7 +34,6 @@ button {
     transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
-/* Efectos */
 button:hover {
     background-color: #b4befe;
 }
@@ -46,3 +41,19 @@ button:hover {
 button:active {
     transform: scale(0.96);
 }
+
+.config-panel {
+    background-color: #313244;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.config-panel label { font-weight: bold; font-size: 14px; }
+.config-panel input, .config-panel select {
+    background: #1e1e2e; color: #cdd6f4; border: 1px solid #89b4fa; border-radius: 4px; padding: 4px; width: 70px;
+}
+.run-btn { background-color: #a6e3a1; color: #1e1e2e; }
+.run-btn:hover { background-color: #94e2d5; }
